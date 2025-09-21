@@ -1,0 +1,7 @@
+Flask
+gunicorn
+google-cloud-vision
+firebase-admin
+python-docx
+requests
+Flask-Cors
