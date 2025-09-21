@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Legalese - Login / Sign Up</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23818cf8'%3E%3Crect x='18' y='86' width='64' height='10' /%3E%3Crect x='0' y='0' width='55' height='12' transform='translate(38 41) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(33 21) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(23 31) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(13 41) rotate(-45)' /%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+    <style type="text/tailwindcss">
+        :root { --brand-color: #3730a3; --bg-color: #181f2e; }
+        body { background-color: var(--bg-color); cursor: default; font-family: 'Inter', sans-serif; }
+        .digital-void { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1; perspective: 1000px; }
+        .digital-void .volumetric-light { position: absolute; width: 150vw; height: 150vh; background: radial-gradient(circle, rgba(100, 50, 250, 0.1) 30%, rgba(0, 0, 0, 0) 60%); transition: transform 0.2s ease-out; will-change: transform; opacity: 0.5; }
+        .digital-void .flow-lines { position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background-image: linear-gradient(90deg, transparent 0%, rgba(55, 48, 163, 0.05) 50%, transparent 70%); animation: flow-lines 10s linear infinite; opacity: 0.3; }
+        @keyframes flow-lines { 0% { left: -100%; } 100% { left: 100%; } }
+        .form-card { background-color: rgba(0, 0, 0, 0.253); backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5); transform-style: preserve-3d; transition: transform 0.2s ease-out; will-change: transform; border: 2px solid rgb(55 48 163 / 25%); box-shadow: 0 0 15px rgba(55, 48, 163, 0.3), 0 25px 50px -12px rgb(0 0 0 / 98%); }
+        .action-button { position: relative; overflow: hidden; transition: background-color 0.3s ease, transform 0.2s ease; }
+        .action-button:hover { transform: scale(1.02); }
+        .form-container { transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease-in-out; will-change: transform, opacity; }
+        .form-container.hidden-left { transform: translateX(-100%); opacity: 0; position: absolute; }
+        .form-container.hidden-right { transform: translateX(100%); opacity: 0; position: absolute; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-gray-200">
+    <div class="digital-void" id="digital-void"></div>
+    <header class="bg-transparent backdrop-blur-sm sticky top-0 z-50">
+        <div class="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <a class="flex items-center gap-2" href="/">
+                <svg class="h-8 w-8 text-indigo-400" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><g><rect x="18" y="86" width="64" height="10" /><rect x="0" y="0" width="55" height="12" transform="translate(38 41) rotate(-45)" /><rect x="0" y="0" width="38" height="10" transform="translate(33 21) rotate(-45)" /><rect x="0" y="0" width="38" height="10" transform="translate(23 31) rotate(-45)" /><rect x="0" y="0" width="38" height="10" transform="translate(13 41) rotate(-45)" /></g></svg>
+                <span class="text-xl font-bold text-gray-50">Legalese</span>
+            </a>
+            <nav class="hidden items-center space-x-8 md:flex">
+                <a class="text-base font-medium text-gray-400 hover:text-gray-100" href="index.html#features">Features</a>
+                <a class="text-base font-medium text-gray-400 hover:text-gray-100" href="index.html#how-it-works">How It Works</a>
+            </nav>
+        </div>
+    </header>
+    <main class="flex-grow flex items-center justify-center">
+        <div class="w-full max-w-md px-4 py-12">
+            <div class="form-card rounded-xl p-8 shadow-2xl sm:p-10" id="form-card">
+                <div class="mb-8 text-center">
+                    <h2 class="text-3xl font-bold text-gray-100" id="form-title">Create Account</h2>
+                    <p class="text-gray-400 mt-2" id="form-subtitle">Get started with Legalese today</p>
+                </div>
+                <div class="min-h-[280px]" id="auth-form">
+                    <div class="form-container w-full hidden-left" id="login-form">
+                        <form id="login-form-element" class="space-y-6">
+                             <div><label for="login-email" class="text-sm font-medium text-gray-300">Email</label><input id="login-email" type="email" required class="mt-1 w-full bg-gray-800/40 rounded-lg p-3 border-indigo-500/30"></div>
+                             <div><label for="login-password" class="text-sm font-medium text-gray-300">Password</label><input id="login-password" type="password" required class="mt-1 w-full bg-gray-800/40 rounded-lg p-3 border-indigo-500/30"></div>
+                            <button type="submit" class="action-button w-full bg-indigo-600 rounded-lg py-3 font-semibold text-white">Log In</button>
+                        </form>
+                    </div>
+                    <div class="form-container w-full" id="signup-form">
+                        <form id="signup-form-element" class="space-y-6">
+                             <div><label for="signup-email" class="text-sm font-medium text-gray-300">Email</label><input id="signup-email" type="email" required class="mt-1 w-full bg-gray-800/40 rounded-lg p-3 border-indigo-500/30"></div>
+                             <div><label for="signup-password" class="text-sm font-medium text-gray-300">Password</label><input id="signup-password" type="password" required class="mt-1 w-full bg-gray-800/40 rounded-lg p-3 border-indigo-500/30"></div>
+                            <button type="submit" class="action-button w-full bg-indigo-600 rounded-lg py-3 font-semibold text-white">Create Account</button>
+                        </form>
+                    </div>
+                </div>
+                 <p id="auth-error" class="text-red-400 text-center mt-4 hidden"></p>
+                <div class="mt-6 text-center">
+                    <a class="text-sm font-medium text-indigo-400 hover:text-indigo-300 cursor-pointer" id="toggle-form">Already have an account? Log In.</a>
+                </div>
+                <div class="relative my-6">
+                    <div aria-hidden="true" class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-700"></div></div>
+                    <div class="relative flex justify-center"><span class="bg-[#101623] px-2 text-sm text-gray-400">OR</span></div>
+                </div>
+                <div class="space-y-3">
+                    <button id="google-login-btn" class="flex w-full items-center justify-center gap-3 rounded-lg border border-indigo-500/30 bg-gray-800/40 px-4 py-3 text-sm font-medium text-gray-100 shadow-sm transition-all duration-200 hover:bg-gray-800">
+                        <img alt="Google logo" class="h-5 w-5" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/150px-Google_%22G%22_logo.svg.png" />
+                        <span>Continue with Google</span>
+                    </button>
+                    <button id="microsoft-login-btn" class="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800/80 px-4 py-3 text-sm font-medium text-gray-100 shadow-sm transition-all duration-200 hover:bg-gray-700">
+                        <img alt="Microsoft logo" class="h-5 w-5" src="https://mailmeteor.com/logos/assets/PNG/Microsoft_Logo_512px.png" />
+                        <span>Continue with Microsoft</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const firebaseConfig = { apiKey: "AIzaSyAvrYvq6yV92sz8M_8_eSF9hB1oHEnMyFQ", authDomain: "helical-realm-472708-n9.firebaseapp.com", projectId: "helical-realm-472708-n9", storageBucket: "helical-realm-472708-n9.appspot.com", messagingSenderId: "413108717637", appId: "1:413108717637:web:a3d7781c7fddf2636f7b2c", measurementId: "G-6MTXSKY26T" };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        const loginFormEl = document.getElementById('login-form-element');
+        const signupFormEl = document.getElementById('signup-form-element');
+        const authError = document.getElementById('auth-error');
+        const toggleLink = document.getElementById('toggle-form');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const formTitle = document.getElementById('form-title');
+        const formSubtitle = document.getElementById('form-subtitle');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const microsoftLoginBtn = document.getElementById('microsoft-login-btn');
+        let isLogin = false; 
+
+        signupFormEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            authError.classList.add('hidden');
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                }
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.remove('hidden');
+            }
+        });
+
+        loginFormEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            authError.classList.add('hidden');
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                authError.textContent = "Invalid email or password.";
+                authError.classList.remove('hidden');
+            }
+        });
+
+        googleLoginBtn.addEventListener('click', async () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.remove('hidden');
+            }
+        });
+
+        microsoftLoginBtn.addEventListener('click', async () => {
+            const provider = new firebase.auth.OAuthProvider('microsoft.com');
+            try {
+                await auth.signInWithPopup(provider);
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                authError.textContent = error.message;
+                authError.classList.remove('hidden');
+            }
+        });
+
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            if (isLogin) {
+                formTitle.textContent = "Welcome Back";
+                formSubtitle.textContent = "Sign in to continue to Legalese";
+                toggleLink.textContent = "Don't have an account? Sign Up.";
+                loginForm.classList.remove('hidden-left');
+                signupForm.classList.add('hidden-right');
+            } else {
+                formTitle.textContent = "Create Account";
+                formSubtitle.textContent = "Get started with Legalese today";
+                toggleLink.textContent = "Already have an account? Log In.";
+                loginForm.classList.add('hidden-left');
+                signupForm.classList.remove('hidden-right');
+            }
+        });
+        
+    });
+    </script>
+</body>
+</html>
+

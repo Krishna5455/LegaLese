@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" style="scroll-behavior: smooth;">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Legalese - Document Analysis</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='%23818cf8'%3E%3Crect x='18' y='86' width='64' height='10' /%3E%3Crect x='0' y='0' width='55' height='12' transform='translate(38 41) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(33 21) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(23 31) rotate(-45)' /%3E%3Crect x='0' y='0' width='38' height='10' transform='translate(13 41) rotate(-45)' /%3E%3C/g%3E%3C/svg%3E" type="image/svg+xml">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<style type="text/tailwindcss">
+    :root { --brand-color: #3b82f6; }
+    body {
+        background-color: #2c2151;
+        background-image: linear-gradient(110deg, #2c2151 0%, #4a3262 50%, #6e497a 100%);
+        font-family: 'Inter', sans-serif;
+    }
+    .card { background-color: #251c48; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1.25rem; }
+    .input-field { background-color: #1b1434; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .input-field:focus { outline: none; border-color: var(--brand-color); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); }
+    .document-scrollbar::-webkit-scrollbar { width: 8px; }
+    .document-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 10px; }
+    .document-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+    #drop-zone { border-style: dashed; transition: background-color 0.3s, border-color 0.3s; }
+    #drop-zone.drag-over { background-color: rgba(79, 70, 229, 0.1); border-color: #4f46e5; }
+    .loader { border-top-color: #4f46e5; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .dropdown-menu { transition: opacity 0.2s ease-out, transform 0.2s ease-out; }
+    #mobile-menu { transition: transform 0.3s ease-in-out; }
+</style>
+</head>
+<body class="text-gray-200">
+
+<div id="auth-loader" class="fixed inset-0 bg-[#2c2151] z-[100] flex items-center justify-center">
+    <div class="loader h-12 w-12 rounded-full border-4 border-t-4 border-gray-700 inline-block"></div>
+</div>
+
+<div id="name-modal-backdrop" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center">
+    <div id="name-modal-card" class="card p-8 rounded-2xl w-full max-w-md">
+        <h2 class="text-2xl font-bold text-white text-center">Welcome to Legalese!</h2>
+        <p class="text-center text-gray-400 mt-2">What should we call you?</p>
+        <form id="name-form" class="mt-6">
+            <label for="display-name-input" class="text-sm font-medium text-gray-300">Display Name</label>
+            <input id="display-name-input" type="text" required class="mt-1 w-full bg-gray-800/40 rounded-lg p-3 border-indigo-500/30">
+            <button type="submit" class="mt-4 w-full bg-indigo-600 rounded-lg py-3 font-semibold text-white hover:bg-indigo-500 transition-colors">Save Name</button>
+        </form>
+    </div>
+</div>
+
+<div id="app-container" class="relative flex min-h-screen w-full flex-col" style="display: none;">
+<header class="bg-[#302658] border-b border-white/10 z-40">
+    <div class="container mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a class="flex items-center gap-3" href="/">
+            <div class="flex h-8 w-8 items-center justify-center">
+                 <svg class="h-full w-full text-blue-500" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 6H20V8H4V6ZM4 11H20V13H4V11ZM4 16H20V18H4V16Z"/></svg>
+            </div>
+            <span class="text-xl font-bold text-gray-50">Legalese</span>
+        </a>
+        <div class="flex items-center gap-x-8">
+             <nav class="hidden md:flex md:gap-x-8">
+                <a class="text-sm font-medium text-slate-300 hover:text-white" href="index.html#features">Features</a>
+                <a class="text-sm font-medium text-slate-300 hover:text-white" href="privacy.html">Security</a>
+            </nav>
+            <div class="hidden md:flex relative">
+                <button id="user-menu-button" class="flex items-center gap-x-2">
+                    <div id="user-avatar" class="h-9 w-9 rounded-full bg-cover bg-center border-2 border-white/50 flex items-center justify-center text-lg font-bold bg-indigo-500"></div>
+                    <span id="user-name" class="hidden text-sm font-medium text-slate-300 lg:block"></span>
+                    <span class="material-symbols-outlined hidden text-slate-500 lg:block">expand_more</span>
+                </button>
+                <div id="dropdown-menu" class="dropdown-menu absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-[#251c48] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden transform opacity-0 scale-95">
+                    <div class="py-1"><a href="#" id="logout-button" class="block px-4 py-2 text-sm text-slate-300 hover:bg-[#302658]">Logout</a></div>
+                </div>
+            </div>
+            <div class="md:hidden">
+                <button id="hamburger-button">
+                    <span class="material-symbols-outlined text-3xl">menu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+<div id="mobile-menu" class="fixed top-0 right-0 h-full w-64 bg-[#251c48] shadow-lg z-50 transform translate-x-full">
+    <div class="p-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-bold text-white">Menu</h2>
+            <button id="close-mobile-menu-button">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
+        <div id="mobile-user-info" class="flex items-center gap-3 mb-6 p-2 bg-black/20 rounded-lg"></div>
+        <nav class="flex flex-col gap-4">
+            <a class="text-slate-300 hover:text-white" href="index.html#features">Features</a>
+            <a class="text-slate-300 hover:text-white" href="privacy.html">Security</a>
+            <a href="#" id="mobile-logout-button" class="text-red-400 hover:text-red-300">Logout</a>
+        </nav>
+    </div>
+</div>
+<main id="main-content" class="flex-1 p-6 lg:p-8 pt-6">
+    <div id="upload-view" class="container mx-auto max-w-3xl">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold text-white">Analyze Your Document</h1>
+            <p class="mt-2 text-lg text-gray-400">Upload a file to get an instant AI-powered analysis.</p>
+        </div>
+        <div id="drop-zone" class="mt-8 card p-10 text-center border-2 border-dashed border-gray-600 rounded-2xl cursor-pointer">
+            <input type="file" id="file-input" class="hidden" accept=".pdf,.txt,.png,.jpg,.jpeg,.docx">
+            <span class="material-symbols-outlined text-6xl text-gray-500">upload_file</span>
+            <p class="mt-4 text-lg font-semibold text-white">Drag & drop your file here</p>
+            <p class="mt-1 text-gray-400">or click to select a file</p>
+            <p class="mt-4 text-xs text-gray-500">Supported formats: PDF, DOCX, TXT, PNG, JPG</p>
+        </div>
+    </div>
+
+    <div id="analysis-view" class="hidden">
+        <div class="grid flex-1 grid-cols-12 gap-6">
+            <div class="col-span-12 flex flex-col gap-6 lg:col-span-3">
+                <div class="card p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold text-white">Fairness Score</h2><span class="material-symbols-outlined text-gray-400">info</span></div><div id="score-container" class="flex items-center gap-4 mt-4"></div></div>
+                <div class="card p-6"><h2 class="mb-4 text-lg font-bold text-white">Summary</h2><p id="summary-text" class="text-sm text-gray-400"></p></div>
+                <div class="card p-6">
+                    <h2 class="mb-4 text-lg font-bold text-white">Risk Distribution</h2>
+                    <div class="relative h-48 w-48 mx-auto"><canvas id="risk-chart"></canvas></div>
+                </div>
+                <div class="card p-6"><h2 class="mb-4 text-lg font-bold text-white">Risk Radar Details</h2><div id="risk-radar-content" class="space-y-4"></div></div>
+            </div>
+            <div class="col-span-12 h-[calc(100vh-120px)] overflow-y-auto rounded-xl lg:col-span-6 document-scrollbar">
+                <div class="card p-8">
+                     <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-4">
+                             <h2 id="document-title" class="text-2xl font-bold tracking-tight text-white"></h2>
+                             <button id="upload-another-btn" class="text-blue-400 hover:text-blue-300 text-sm font-semibold flex items-center gap-1">
+                                <span class="material-symbols-outlined">upload_file</span>
+                                New Analysis
+                             </button>
+                        </div>
+                        <button id="simplify-btn" class="bg-indigo-600 text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-indigo-500 transition-colors">Simplify Text</button>
+                    </div>
+                    <pre id="document-text" class="space-y-4 text-base leading-relaxed text-gray-300 whitespace-pre-wrap font-sans"></pre>
+                </div>
+                <div id="simplified-view" class="card p-8 mt-6 hidden">
+                     <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold tracking-tight text-white">Simplified Version</h2>
+                        <div id="simplify-loader" class="loader h-6 w-6 rounded-full border-4 border-t-4 border-gray-700 hidden"></div>
+                    </div>
+                    <pre id="simplified-text" class="space-y-4 text-base leading-relaxed text-gray-300 whitespace-pre-wrap font-sans"></pre>
+                </div>
+            </div>
+            <div class="col-span-12 flex flex-col gap-6 lg:col-span-3">
+                <div class="card flex h-full flex-col">
+                    <div class="border-b border-white/10 p-4"><h2 class="font-bold text-white">Ask Legalese</h2></div>
+                    <div id="chat-history" class="flex-grow space-y-4 overflow-y-auto p-4">
+                         <div class="flex items-start gap-3"><div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white"><svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.25278C12 6.25278 12 2.75 12 2.75C12 2.75 15.5 2.75 15.5 6.25278C15.5 9.75278 12 15.25 12 15.25C12 15.25 8.5 9.75278 8.5 6.25278C8.5 2.75 12 2.75 12 2.75Z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.875 19C10.875 19 13.125 19 13.125 19C13.125 19 13.125 21.25 13.125 21.25C13.125 21.25 10.875 21.25 10.875 21.25C10.875 21.25 10.875 19 10.875 19Z" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div><div class="rounded-lg bg-gray-800 p-3"><p class="text-sm text-gray-300">Hello! I'm Legalese. Once your document is analyzed, ask me anything about it.</p></div></div></div>
+                    </div>
+                    <div class="border-t border-white/10 p-4">
+                        <div class="relative flex items-center">
+                            <input id="chat-input" class="input-field w-full rounded-full py-2 pl-4 pr-10 text-sm placeholder-gray-500" placeholder="Type your question..." type="text" disabled/>
+                            <button id="send-button" class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 transition-colors hover:text-indigo-500" disabled><span class="material-symbols-outlined">send</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loading-view" class="hidden text-center py-20">
+        <div class="loader h-12 w-12 rounded-full border-4 border-t-4 border-gray-700 inline-block"></div>
+        <p class="mt-4 text-lg text-white">Analyzing your document...</p>
+        <p class="text-gray-400">This may take a moment.</p>
+    </div>
+</main>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const firebaseConfig = { apiKey: "AIzaSyAvrYvq6yV92sz8M_8_eSF9hB1oHEnMyFQ", authDomain: "helical-realm-472708-n9.firebaseapp.com", projectId: "helical-realm-472708-n9", storageBucket: "helical-realm-472708-n9.appspot.com", messagingSenderId: "413108717637", appId: "1:413108717637:web:a3d7781c7fddf2636f7b2c", measurementId: "G-6MTXSKY26T" };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    let fullDocumentText = ""; 
+    let riskChartInstance = null;
+    
+    const allUI = {
+        authLoader: document.getElementById('auth-loader'),
+        appContainer: document.getElementById('app-container'),
+        uploadView: document.getElementById('upload-view'),
+        analysisView: document.getElementById('analysis-view'),
+        loadingView: document.getElementById('loading-view'),
+        userMenuButton: document.getElementById('user-menu-button'),
+        dropdownMenu: document.getElementById('dropdown-menu'),
+        logoutButton: document.getElementById('logout-button'),
+        userNameEl: document.getElementById('user-name'),
+        userAvatarEl: document.getElementById('user-avatar'),
+        simplifyBtn: document.getElementById('simplify-btn'),
+        simplifiedView: document.getElementById('simplified-view'),
+        simplifiedText: document.getElementById('simplified-text'),
+        simplifyLoader: document.getElementById('simplify-loader'),
+        uploadAnotherBtn: document.getElementById('upload-another-btn'),
+        dropZone: document.getElementById('drop-zone'),
+        fileInput: document.getElementById('file-input'),
+        chatInput: document.getElementById('chat-input'),
+        sendButton: document.getElementById('send-button'),
+        chatHistory: document.getElementById('chat-history'),
+        hamburgerButton: document.getElementById('hamburger-button'),
+        mobileMenu: document.getElementById('mobile-menu'),
+        closeMobileMenuButton: document.getElementById('close-mobile-menu-button'),
+        mobileUserInfo: document.getElementById('mobile-user-info'),
+        mobileLogoutButton: document.getElementById('mobile-logout-button'),
+        nameModalBackdrop: document.getElementById('name-modal-backdrop'),
+        nameForm: document.getElementById('name-form'),
+        displayNameInput: document.getElementById('display-name-input'),
+    };
+
+    allUI.appContainer.style.display = 'none';
+
+    auth.onAuthStateChanged(user => {
+        allUI.authLoader.style.display = 'none';
+        allUI.appContainer.style.display = 'flex';
+
+        if (user) {
+            if (!user.displayName) {
+                allUI.nameModalBackdrop.classList.remove('hidden');
+            }
+            updateUserInfo(user);
+        } else {
+            window.location.replace('/login.html');
+        }
+    });
+
+    allUI.nameForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newName = allUI.displayNameInput.value.trim();
+        if (newName && auth.currentUser) {
+            try {
+                await auth.currentUser.updateProfile({ displayName: newName });
+                updateUserInfo(auth.currentUser);
+                allUI.nameModalBackdrop.classList.add('hidden');
+            } catch (error) {
+                console.error("Error updating display name:", error);
+                alert("Could not update your name. Please try again.");
+            }
+        }
+    });
+
+    function updateUserInfo(user) {
+        const displayName = user.displayName || user.email;
+        allUI.userNameEl.textContent = displayName;
+        const initial = displayName ? displayName.charAt(0).toUpperCase() : '?';
+        const avatarContent = `<span>${initial}</span>`;
+        
+        if (user.photoURL) {
+            allUI.userAvatarEl.style.backgroundImage = `url('${user.photoURL}')`;
+            allUI.userAvatarEl.innerHTML = '';
+        } else {
+            allUI.userAvatarEl.innerHTML = avatarContent;
+            allUI.userAvatarEl.style.backgroundImage = '';
+        }
+
+        allUI.mobileUserInfo.innerHTML = `<div class="h-10 w-10 rounded-full bg-cover bg-center border-2 border-white/50 flex items-center justify-center text-lg font-bold bg-indigo-500" style="background-image: ${user.photoURL ? `url('${user.photoURL}')` : 'none'}">${!user.photoURL ? avatarContent : ''}</div><span class="text-sm font-medium text-slate-300">${displayName}</span>`;
+    }
+
+    allUI.userMenuButton.addEventListener('click', () => toggleDropdown(allUI.dropdownMenu));
+    allUI.hamburgerButton.addEventListener('click', () => allUI.mobileMenu.classList.remove('translate-x-full'));
+    allUI.closeMobileMenuButton.addEventListener('click', () => allUI.mobileMenu.classList.add('translate-x-full'));
+    allUI.logoutButton.addEventListener('click', handleLogout);
+    allUI.mobileLogoutButton.addEventListener('click', handleLogout);
+    allUI.simplifyBtn.addEventListener('click', handleSimplifyDocument);
+    allUI.uploadAnotherBtn.addEventListener('click', () => {
+        allUI.analysisView.classList.add('hidden');
+        allUI.uploadView.classList.remove('hidden');
+        allUI.simplifiedView.classList.add('hidden');
+    });
+
+    function toggleDropdown(menu) {
+        const isHidden = menu.classList.contains('hidden');
+        if (isHidden) {
+            menu.classList.remove('hidden');
+            setTimeout(() => { menu.classList.remove('opacity-0', 'scale-95'); }, 10);
+        } else {
+            menu.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => { menu.classList.add('hidden'); }, 200);
+        }
+    }
+    
+    async function handleLogout(e) { e.preventDefault(); try { await auth.signOut(); } catch (error) { console.error("Logout Error:", error); } }
+    
+    window.addEventListener('click', (e) => { if (!allUI.userMenuButton.contains(e.target) && !allUI.dropdownMenu.contains(e.target)) { if (!allUI.dropdownMenu.classList.contains('hidden')) { toggleDropdown(allUI.dropdownMenu); } } });
+    
+    allUI.dropZone.addEventListener('click', () => allUI.fileInput.click());
+    allUI.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); allUI.dropZone.classList.add('drag-over'); });
+    allUI.dropZone.addEventListener('dragleave', () => { allUI.dropZone.classList.remove('drag-over'); });
+    allUI.dropZone.addEventListener('drop', (e) => { e.preventDefault(); allUI.dropZone.classList.remove('drag-over'); if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files[0]); });
+    allUI.fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) handleFileUpload(e.target.files[0]); });
+    
+    async function handleFileUpload(file) {
+        allUI.uploadView.classList.add('hidden');
+        allUI.analysisView.classList.add('hidden');
+        allUI.loadingView.classList.remove('hidden');
+        allUI.simplifiedView.classList.add('hidden');
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const response = await fetch('/analyze', { method: 'POST', body: formData });
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || `Server error: ${response.status}`);
+            }
+            const data = await response.json();
+            fullDocumentText = data.fullText; 
+            populateAnalysisView(data.analysis, file.name);
+            allUI.loadingView.classList.add('hidden');
+            allUI.analysisView.classList.remove('hidden');
+            allUI.chatInput.disabled = false;
+            allUI.sendButton.disabled = false;
+        } catch (error) {
+            console.error("Analysis Error:", error);
+            alert(`An error occurred during analysis: ${error.message}`);
+            allUI.loadingView.classList.add('hidden');
+            allUI.uploadView.classList.remove('hidden');
+        }
+    }
+    
+    async function handleSimplifyDocument() {
+        if (!fullDocumentText) return;
+        allUI.simplifiedView.classList.remove('hidden');
+        allUI.simplifyLoader.classList.remove('hidden');
+        allUI.simplifiedText.textContent = ''; 
+        try {
+            const response = await fetch('/simplify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ documentText: fullDocumentText })
+            });
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+            const data = await response.json();
+            allUI.simplifiedText.textContent = data.simplifiedText;
+            allUI.simplifiedView.scrollIntoView({ behavior: 'smooth' });
+        } catch(error) {
+            console.error("Simplify Error:", error);
+            allUI.simplifiedText.textContent = "Sorry, an error occurred while simplifying the document.";
+        } finally {
+            allUI.simplifyLoader.classList.add('hidden');
+        }
+    }
+    
+    allUI.sendButton.addEventListener('click', handleSendMessage);
+    allUI.chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); handleSendMessage(); } });
+    
+    async function handleSendMessage() {
+        const question = allUI.chatInput.value.trim();
+        if (!question) return;
+        appendMessage(question, 'user');
+        allUI.chatInput.value = '';
+        appendMessage('Thinking...', 'ai', true); 
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question, documentText: fullDocumentText })
+            });
+            if (!response.ok) throw new Error(`Chat server error: ${response.status}`);
+            const data = await response.json();
+            const thinkingIndicator = document.getElementById('thinking-indicator');
+            if(thinkingIndicator) thinkingIndicator.remove();
+            appendMessage(data.answer, 'ai');
+        } catch (error) {
+            console.error("Chat Error:", error);
+            const thinkingIndicator = document.getElementById('thinking-indicator');
+            if(thinkingIndicator) thinkingIndicator.remove();
+            appendMessage("Sorry, I had trouble answering that. Please try again.", 'ai');
+        }
+    }
+    
+    function appendMessage(text, sender, isThinking = false) {
+        const messageWrapper = document.createElement('div');
+        const messageBubble = document.createElement('div');
+        messageBubble.className = 'rounded-lg p-3';
+        messageBubble.innerHTML = `<p class="text-sm text-gray-300">${text}</p>`;
+        if (sender === 'user') {
+            messageWrapper.className = 'flex items-start gap-3 justify-end';
+            messageBubble.classList.add('bg-indigo-500', 'text-white');
+            messageWrapper.innerHTML = `<div>${messageBubble.outerHTML}</div>`;
+        } else {
+            messageWrapper.className = 'flex items-start gap-3';
+            messageBubble.classList.add('bg-gray-800');
+            if (isThinking) messageWrapper.id = 'thinking-indicator';
+            messageWrapper.innerHTML = `<div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-500 text-white"><svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 6.25278C12 6.25278 12 2.75 12 2.75C12 2.75 15.5 2.75 15.5 6.25278C15.5 9.75278 12 15.25 12 15.25C12 15.25 8.5 9.75278 8.5 6.25278C8.5 2.75 12 2.75 12 2.75Z" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.875 19C10.875 19 13.125 19 13.125 19C13.125 19 13.125 21.25 13.125 21.25C13.125 21.25 10.875 21.25 10.875 21.25C10.875 21.25 10.875 19 10.875 19Z" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div>${messageBubble.outerHTML}</div>`;
+        }
+        allUI.chatHistory.appendChild(messageWrapper);
+        allUI.chatHistory.scrollTop = allUI.chatHistory.scrollHeight;
+    }
+
+    function createRiskChart(riskData) {
+        const ctx = document.getElementById('risk-chart').getContext('2d');
+        if (riskChartInstance) { riskChartInstance.destroy(); }
+        const counts = { 'High-Risk': 0, 'Caution': 0, 'Clear': 0 };
+        if (riskData) {
+            riskData.forEach(risk => {
+                if (counts.hasOwnProperty(risk.level)) { counts[risk.level]++; }
+            });
+        }
+        riskChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['High-Risk', 'Caution', 'Clear'],
+                datasets: [{
+                    data: [counts['High-Risk'], counts['Caution'], counts['Clear']],
+                    backgroundColor: [ '#ef4444', '#f59e0b', '#22c55e' ],
+                    borderColor: '#251c48',
+                    borderWidth: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                         bodyFont: { family: "'Inter', sans-serif" },
+                         titleFont: { family: "'Inter', sans-serif" }
+                    }
+                }
+            }
+        });
+    }
+
+    function populateAnalysisView(analysisData, fileName) {
+        document.getElementById('document-title').textContent = fileName;
+        document.getElementById('document-text').textContent = fullDocumentText;
+        document.getElementById('summary-text').textContent = analysisData.summary;
+        const scoreContainer = document.getElementById('score-container');
+        const score = analysisData.fairnessScore || 0;
+        scoreContainer.innerHTML = `<div class="relative flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full bg-[#1b1434]/50"><svg class="absolute left-0 top-0 h-full w-full -rotate-90" viewBox="0 0 36 36"><path class="text-gray-700/50" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="currentColor" stroke-width="3"></path><path class="text-indigo-500" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="currentColor" stroke-dasharray="${score}, 100" stroke-linecap="round" stroke-width="3"></path></svg><span class="text-3xl font-bold text-white">${score}</span></div><p class="text-sm text-gray-400">This score reflects how balanced the document is compared to standard templates.</p>`;
+        
+        createRiskChart(analysisData.riskRadar);
+
+        const riskRadarContent = document.getElementById('risk-radar-content');
+        riskRadarContent.innerHTML = '';
+        if (analysisData.riskRadar && analysisData.riskRadar.length > 0) {
+            analysisData.riskRadar.forEach(risk => {
+                let iconHtml = '', colorClass = '';
+                switch (risk.level) {
+                    case 'High-Risk':
+                        iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                        colorClass = 'text-red-500';
+                        break;
+                    case 'Caution':
+                        iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+                        colorClass = 'text-amber-500';
+                        break;
+                    case 'Clear':
+                         iconHtml = `<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                        colorClass = 'text-green-500';
+                        break;
+                }
+                const riskElement = document.createElement('div');
+                riskElement.className = 'flex items-start gap-3';
+                riskElement.innerHTML = `<div class="flex-shrink-0">${iconHtml}</div><div><p class="font-bold ${colorClass}">${risk.title}</p><p class="mt-1 text-sm text-gray-300">${risk.explanation}</p></div>`;
+                riskRadarContent.appendChild(riskElement);
+            });
+        }
+    }
+});
+</script>
+</body>
+</html>
+

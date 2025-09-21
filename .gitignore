@@ -1,0 +1,4 @@
+credentials.json
+firebase-admin-credentials.json
+*.key
+*.pem
