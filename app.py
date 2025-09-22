@@ -9,20 +9,62 @@ import io
 from flask_cors import CORS
 import requests
 
-# --- CONFIGURATION ---
-if os.path.exists("firebase-admin-credentials.json"):
-    cred = credentials.Certificate("firebase-admin-credentials.json")
+# --- CONFIGURATION (NOW WITH DETAILED LOGGING) ---
+print("--- SERVER STARTING: CONFIGURATION PHASE ---")
+
+# --- 1. FIREBASE ADMIN CREDENTIALS SETUP ---
+try:
+    print("Attempting to load Firebase credentials...")
+    firebase_creds_json_str = os.getenv("FIREBASE_CREDENTIALS_JSON")
+    if firebase_creds_json_str:
+        print("SUCCESS: Found FIREBASE_CREDENTIALS_JSON environment variable.")
+        firebase_creds_dict = json.loads(firebase_creds_json_str)
+        cred = credentials.Certificate(firebase_creds_dict)
+    else:
+        print("INFO: FIREBASE_CREDENTIALS_JSON env var not found. Trying local file 'firebase-admin-credentials.json'...")
+        cred = credentials.Certificate("firebase-admin-credentials.json")
+    
     if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
+    print("SUCCESS: Firebase Admin initialized.")
+except Exception as e:
+    print(f"!!! FATAL ERROR INITIALIZING FIREBASE ADMIN: {e}")
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'credentials.json'
-PROJECT_ID = "helical-realm-472708-n9" 
-API_KEY = "AIzaSyCmmjmRZdhVfRhTh2NN9AdcnspKLKqaVlc"
+# --- 2. GOOGLE CLOUD VISION CREDENTIALS SETUP ---
+try:
+    print("Attempting to load Google Cloud Vision credentials...")
+    google_creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    if google_creds_json_str:
+        print("SUCCESS: Found GOOGLE_CREDENTIALS_JSON environment variable.")
+        creds_path = "/tmp/credentials.json"
+        with open(creds_path, "w") as f:
+            f.write(google_creds_json_str)
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = creds_path
+        print(f"SUCCESS: Wrote Google credentials to {creds_path}")
+    else:
+        print("INFO: GOOGLE_CREDENTIALS_JSON env var not found. Using local file 'credentials.json'...")
+        os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'credentials.json'
+except Exception as e:
+    print(f"!!! FATAL ERROR SETTING UP GOOGLE CLOUD VISION CREDS: {e}")
+
+# --- 3. API KEY AND PROJECT ID SETUP ---
+API_KEY = os.getenv("API_KEY")
+PROJECT_ID = os.getenv("PROJECT_ID")
+
+if not API_KEY:
+    print("!!! WARNING: API_KEY environment variable not found! Using fallback for local dev.")
+    API_KEY = "AIzaSyCmmjmRZdhVfRhTh2NN9AdcnspKLKqaVlc"
+
+if not PROJECT_ID:
+    print("!!! WARNING: PROJECT_ID environment variable not found! Using fallback for local dev.")
+    PROJECT_ID = "helical-realm-472708-n9"
+
+print(f"--- Configuration complete. Project ID: {PROJECT_ID} ---")
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)
 
-# --- AI & HELPER FUNCTIONS ---
+# --- All other functions and routes remain unchanged ---
 def get_text_from_file(file_content, mime_type):
     if not file_content: raise Exception("The uploaded file is empty.")
     if 'wordprocessingml.document' in mime_type:
@@ -76,7 +118,6 @@ def answer_chat_question(document_text, question):
     prompt = f"Based ONLY on the document text provided, answer the user's question concisely.\n\nDOCUMENT:\n{document_text}\n\nQUESTION:\n{question}"
     return call_gemini_api(prompt)
 
-# --- API ENDPOINTS ---
 @app.route('/analyze', methods=['POST'])
 def analyze_endpoint():
     try:
@@ -122,7 +163,7 @@ def signup():
         password = data.get('password')
         if not email or not password: 
             return jsonify({'error': 'Email and password are required'}), 400
-        user = auth.create_user(email=email, password=password)
+        user = auth..create_user(email=email, password=password)
         return jsonify({'uid': user.uid}), 201
     except Exception as e:
         print(f"!!! ERROR in /signup: {e}")
@@ -132,7 +173,6 @@ def signup():
             elif e.code == 'WEAK_PASSWORD': error_message = 'Password should be at least 6 characters.'
         return jsonify({'error': error_message}), 400
 
-# --- HTML Page Routing ---
 @app.route('/')
 def index(): return app.send_static_file('index.html')
 @app.route('/login.html')
