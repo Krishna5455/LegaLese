@@ -163,7 +163,9 @@ def signup():
         password = data.get('password')
         if not email or not password: 
             return jsonify({'error': 'Email and password are required'}), 400
-        user = auth..create_user(email=email, password=password)
+        # --- THIS LINE IS NOW FIXED ---
+        user = auth.create_user(email=email, password=password)
+        # -------------------------------
         return jsonify({'uid': user.uid}), 201
     except Exception as e:
         print(f"!!! ERROR in /signup: {e}")
