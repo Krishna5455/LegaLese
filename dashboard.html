@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en" style="scroll-behavior: smooth;">
 <head>
 <meta charset="utf-8"/>
@@ -59,8 +60,8 @@
         </a>
         <div class="flex items-center gap-x-8">
              <nav class="hidden md:flex md:gap-x-8">
-                <a class="text-sm font-medium text-slate-300 hover:text-white" href="index.html#features" target="_blank" rel="noopener noreferrer">Features</a>
-                <a class="text-sm font-medium text-slate-300 hover:text-white" href="privacy.html" target="_blank" rel="noopener noreferrer">Security</a>
+                <a class="text-sm font-medium text-slate-300 hover:text-white" href="index.html#features">Features</a>
+                <a class="text-sm font-medium text-slate-300 hover:text-white" href="privacy.html">Security</a>
             </nav>
             <div class="hidden md:flex relative">
                 <button id="user-menu-button" class="flex items-center gap-x-2">
@@ -90,13 +91,13 @@
         </div>
         <div id="mobile-user-info" class="flex items-center gap-3 mb-6 p-2 bg-black/20 rounded-lg"></div>
         <nav class="flex flex-col gap-4">
-            <a class="text-slate-300 hover:text-white" href="index.html#features" target="_blank" rel="noopener noreferrer">Features</a>
-            <a class="text-slate-300 hover:text-white" href="privacy.html" target="_blank" rel="noopener noreferrer">Security</a>
+            <a class="text-slate-300 hover:text-white" href="index.html#features">Features</a>
+            <a class="text-slate-300 hover:text-white" href="privacy.html">Security</a>
             <a href="#" id="mobile-logout-button" class="text-red-400 hover:text-red-300">Logout</a>
         </nav>
     </div>
 </div>
-<main id="main-content" class="flex-1 p-4 md:p-6 lg:p-8 pt-6">
+<main id="main-content" class="flex-1 p-6 lg:p-8 pt-6">
     <div id="upload-view" class="container mx-auto max-w-3xl">
         <div class="text-center">
             <h1 class="text-4xl font-bold text-white">Analyze Your Document</h1>
@@ -112,8 +113,8 @@
     </div>
 
     <div id="analysis-view" class="hidden">
-        <div class="grid flex-1 grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="col-span-1 lg:col-span-3 flex flex-col gap-6">
+        <div class="grid flex-1 grid-cols-12 gap-6">
+            <div class="col-span-12 flex flex-col gap-6 lg:col-span-3">
                 <div class="card p-6"><div class="flex items-center justify-between"><h2 class="text-lg font-bold text-white">Fairness Score</h2><span class="material-symbols-outlined text-gray-400">info</span></div><div id="score-container" class="flex items-center gap-4 mt-4"></div></div>
                 <div class="card p-6"><h2 class="mb-4 text-lg font-bold text-white">Summary</h2><p id="summary-text" class="text-sm text-gray-400"></p></div>
                 <div class="card p-6">
@@ -122,11 +123,11 @@
                 </div>
                 <div class="card p-6"><h2 class="mb-4 text-lg font-bold text-white">Risk Radar Details</h2><div id="risk-radar-content" class="space-y-4"></div></div>
             </div>
-            <div class="col-span-1 lg:col-span-6 h-[70vh] lg:h-[calc(100vh-120px)] flex flex-col gap-6">
-                <div class="card p-6 md:p-8 flex-grow flex flex-col">
-                     <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+            <div class="col-span-12 h-[calc(100vh-120px)] overflow-y-auto rounded-xl lg:col-span-6 document-scrollbar">
+                <div class="card p-8">
+                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center gap-4">
-                             <h2 id="document-title" class="text-xl md:text-2xl font-bold tracking-tight text-white truncate"></h2>
+                             <h2 id="document-title" class="text-2xl font-bold tracking-tight text-white"></h2>
                              <button id="upload-another-btn" class="text-blue-400 hover:text-blue-300 text-sm font-semibold flex items-center gap-1">
                                 <span class="material-symbols-outlined">upload_file</span>
                                 New Analysis
@@ -134,11 +135,9 @@
                         </div>
                         <button id="simplify-btn" class="bg-indigo-600 text-white text-sm font-semibold py-2 px-4 rounded-lg hover:bg-indigo-500 transition-colors">Simplify Text</button>
                     </div>
-                    <div class="flex-grow overflow-y-auto document-scrollbar pr-2">
-                        <pre id="document-text" class="space-y-4 text-base leading-relaxed text-gray-300 whitespace-pre-wrap font-sans"></pre>
-                    </div>
+                    <pre id="document-text" class="space-y-4 text-base leading-relaxed text-gray-300 whitespace-pre-wrap font-sans"></pre>
                 </div>
-                <div id="simplified-view" class="card p-6 md:p-8 mt-6 hidden">
+                <div id="simplified-view" class="card p-8 mt-6 hidden">
                      <div class="flex justify-between items-center mb-4">
                         <h2 class="text-2xl font-bold tracking-tight text-white">Simplified Version</h2>
                         <div id="simplify-loader" class="loader h-6 w-6 rounded-full border-4 border-t-4 border-gray-700 hidden"></div>
@@ -146,7 +145,7 @@
                     <pre id="simplified-text" class="space-y-4 text-base leading-relaxed text-gray-300 whitespace-pre-wrap font-sans"></pre>
                 </div>
             </div>
-            <div class="col-span-1 lg:col-span-3 flex flex-col">
+            <div class="col-span-12 flex flex-col gap-6 lg:col-span-3">
                 <div class="card flex h-full flex-col">
                     <div class="border-b border-white/10 p-4"><h2 class="font-bold text-white">Ask Legalese</h2></div>
                     <div id="chat-history" class="flex-grow space-y-4 overflow-y-auto p-4">
@@ -217,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged(user => {
         allUI.authLoader.style.display = 'none';
         allUI.appContainer.style.display = 'flex';
+
         if (user) {
             if (!user.displayName) {
                 allUI.nameModalBackdrop.classList.remove('hidden');
@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allUI.userNameEl.textContent = displayName;
         const initial = displayName ? displayName.charAt(0).toUpperCase() : '?';
         const avatarContent = `<span>${initial}</span>`;
+        
         if (user.photoURL) {
             allUI.userAvatarEl.style.backgroundImage = `url('${user.photoURL}')`;
             allUI.userAvatarEl.innerHTML = '';
@@ -254,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             allUI.userAvatarEl.innerHTML = avatarContent;
             allUI.userAvatarEl.style.backgroundImage = '';
         }
+
         allUI.mobileUserInfo.innerHTML = `<div class="h-10 w-10 rounded-full bg-cover bg-center border-2 border-white/50 flex items-center justify-center text-lg font-bold bg-indigo-500" style="background-image: ${user.photoURL ? `url('${user.photoURL}')` : 'none'}">${!user.photoURL ? avatarContent : ''}</div><span class="text-sm font-medium text-slate-300">${displayName}</span>`;
     }
 
