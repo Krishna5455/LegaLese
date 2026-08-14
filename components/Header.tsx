@@ -10,8 +10,16 @@ export function Header() {
         >
           LegaLese
         </Link>
-        <nav aria-label="Main">
-          <span className="text-sm text-muted">Legal contract analysis</span>
+        <nav aria-label="Main" className="flex items-center gap-4 text-sm">
+          <Link href="/login" className="text-muted hover:text-foreground">
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="font-medium text-accent hover:text-accent-hover"
+          >
+            Sign up
+          </Link>
         </nav>
       </div>
     </header>
