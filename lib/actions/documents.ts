@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import {
-  validateDocumentFile,
-} from "@/lib/documents/validation";
+import { processDocumentBuffer } from "@/lib/documents/processor";
+import { validateDocumentFile } from "@/lib/documents/validation";
 import { createClient } from "@/lib/supabase/server";
 import type { Document } from "@/types/database";
+import type { ProcessedDocument } from "@/types/processing";
 
 export type UploadActionResult = {
   success?: boolean;
@@ -52,7 +52,7 @@ export async function uploadDocument(
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 1. Upload file to private Supabase Storage bucket 'contracts'
+    // 1. Upload raw file to private Supabase Storage bucket 'contracts'
     const { error: storageError } = await supabase.storage
       .from("contracts")
       .upload(storagePath, fileBuffer, {
@@ -97,6 +97,14 @@ export async function uploadDocument(
       };
     }
 
+    // 3. Immediately trigger document text extraction
+    try {
+      await processDocumentInternal(supabase, user.id, documentRow as Document, fileBuffer);
+    } catch (procErr) {
+      console.warn("Initial processing warning:", procErr);
+      // Even if initial processing fails, document record exists as 'failed' and can be retried
+    }
+
     revalidatePath("/dashboard");
 
     return {
@@ -111,6 +119,166 @@ export async function uploadDocument(
           ? err.message
           : "An unexpected error occurred while processing your upload.",
     };
+  }
+}
+
+export type ProcessActionResult = {
+  success?: boolean;
+  error?: string;
+  processed?: ProcessedDocument;
+};
+
+export async function processDocument(
+  documentId: string,
+): Promise<ProcessActionResult> {
+  try {
+    if (!documentId) {
+      return { error: "Document ID is required." };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { error: "You must be signed in to process documents." };
+    }
+
+    // 1. Fetch document and confirm ownership
+    const { data: doc, error: fetchError } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("id", documentId)
+      .eq("user_id", user.id)
+      .single();
+
+    if (fetchError || !doc) {
+      return {
+        error:
+          "Document not found or you do not have permission to process it.",
+      };
+    }
+
+    // 2. Download file from storage
+    const { data: fileBlob, error: downloadError } = await supabase.storage
+      .from("contracts")
+      .download(doc.storage_path);
+
+    if (downloadError || !fileBlob) {
+      await supabase
+        .from("documents")
+        .update({
+          status: "failed",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", doc.id)
+        .eq("user_id", user.id);
+
+      revalidatePath("/dashboard");
+      return {
+        error: `Could not retrieve document from storage: ${downloadError?.message || "File missing"}`,
+      };
+    }
+
+    const arrayBuffer = await fileBlob.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+
+    // 3. Process document
+    const processedDoc = await processDocumentInternal(
+      supabase,
+      user.id,
+      doc as Document,
+      fileBuffer,
+    );
+
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      processed: processedDoc,
+    };
+  } catch (err) {
+    console.error("Unexpected process error:", err);
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while processing the document.",
+    };
+  }
+}
+
+/**
+ * Internal helper to run extraction and save JSON artifact to storage
+ */
+async function processDocumentInternal(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  doc: Document,
+  fileBuffer: Buffer,
+): Promise<ProcessedDocument> {
+  // 1. Transition status to 'processing'
+  await supabase
+    .from("documents")
+    .update({
+      status: "processing",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", doc.id)
+    .eq("user_id", userId);
+
+  try {
+    // 2. Extract and clean text
+    const processedDoc = await processDocumentBuffer({
+      documentId: doc.id,
+      filename: doc.filename,
+      documentType: doc.document_type,
+      buffer: fileBuffer,
+    });
+
+    // 3. Upload extracted JSON artifact to private 'contracts' storage bucket
+    const artifactPath = `${doc.storage_path}.extracted.json`;
+    const artifactBuffer = Buffer.from(JSON.stringify(processedDoc, null, 2));
+
+    const { error: artifactUploadErr } = await supabase.storage
+      .from("contracts")
+      .upload(artifactPath, artifactBuffer, {
+        contentType: "application/json",
+        upsert: true,
+      });
+
+    if (artifactUploadErr) {
+      throw new Error(
+        `Failed to store extracted text artifact: ${artifactUploadErr.message}`,
+      );
+    }
+
+    // 4. Update status to 'complete'
+    await supabase
+      .from("documents")
+      .update({
+        status: "complete",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", doc.id)
+      .eq("user_id", userId);
+
+    return processedDoc;
+  } catch (error) {
+    // Transition status to 'failed'
+    await supabase
+      .from("documents")
+      .update({
+        status: "failed",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", doc.id)
+      .eq("user_id", userId);
+
+    throw error;
   }
 }
 
@@ -146,20 +314,25 @@ export async function deleteDocument(
       .single();
 
     if (fetchError || !doc) {
-      return { error: "Document not found or you do not have permission to delete it." };
+      return {
+        error:
+          "Document not found or you do not have permission to delete it.",
+      };
     }
 
-    // 2. Remove storage object from 'contracts' bucket if storage_path exists
+    // 2. Remove raw storage object and extracted JSON artifact from 'contracts' bucket
     if (doc.storage_path) {
+      const filesToRemove = [
+        doc.storage_path,
+        `${doc.storage_path}.extracted.json`,
+      ];
+
       const { error: storageRemoveError } = await supabase.storage
         .from("contracts")
-        .remove([doc.storage_path]);
+        .remove(filesToRemove);
 
       if (storageRemoveError) {
-        console.warn(
-          "Storage removal warning:",
-          storageRemoveError.message,
-        );
+        console.warn("Storage removal warning:", storageRemoveError.message);
       }
     }
 

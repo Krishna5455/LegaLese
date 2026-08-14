@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { deleteDocument } from "@/lib/actions/documents";
+import { deleteDocument, processDocument } from "@/lib/actions/documents";
 import { formatBytes } from "@/lib/documents/validation";
 import type { Document } from "@/types/database";
 
@@ -25,53 +25,82 @@ function getFileType(doc: Document): string {
 
 function getStatusBadge(status?: string | null) {
   const s = (status || "uploaded").toLowerCase();
-  if (s === "uploaded") {
+  if (s === "complete") {
     return (
-      <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-        Uploaded
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+        Ready
       </span>
     );
   }
   if (s === "processing") {
     return (
-      <span className="inline-flex items-center rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
-        Processing
-      </span>
-    );
-  }
-  if (s === "complete") {
-    return (
-      <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-        Complete
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
+        <svg
+          className="h-3 w-3 animate-spin text-yellow-600"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        Processing...
       </span>
     );
   }
   if (s === "failed") {
     return (
-      <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
         Failed
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">
-      {status}
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+      <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+      Uploaded
     </span>
   );
 }
 
 export function DocumentCard({ document }: { document: Document }) {
   const [isConfirming, setIsConfirming] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [isProcessing, startProcessTransition] = useTransition();
+
+  const isPending = isDeleting || isProcessing;
+  const status = (document.status || "uploaded").toLowerCase();
 
   const handleDelete = () => {
-    setDeleteError(null);
-    startTransition(async () => {
+    setActionError(null);
+    startDeleteTransition(async () => {
       const result = await deleteDocument(document.id);
       if (result.error) {
-        setDeleteError(result.error);
+        setActionError(result.error);
         setIsConfirming(false);
+      }
+    });
+  };
+
+  const handleProcess = () => {
+    setActionError(null);
+    startProcessTransition(async () => {
+      const result = await processDocument(document.id);
+      if (result.error) {
+        setActionError(result.error);
       }
     });
   };
@@ -96,7 +125,22 @@ export function DocumentCard({ document }: { document: Document }) {
         </div>
 
         <div className="flex items-center justify-between gap-3 sm:justify-end">
-          <div>{getStatusBadge(document.status)}</div>
+          <div className="flex items-center gap-2">
+            {getStatusBadge(document.status)}
+
+            {/* Retry / Process Button for failed or pending documents */}
+            {(status === "uploaded" || status === "failed") && (
+              <button
+                type="button"
+                onClick={handleProcess}
+                disabled={isPending}
+                className="rounded border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-background disabled:opacity-50"
+                title="Extract and process text"
+              >
+                {isProcessing ? "Processing..." : status === "failed" ? "Retry" : "Process"}
+              </button>
+            )}
+          </div>
 
           {!isConfirming ? (
             <button
@@ -129,7 +173,7 @@ export function DocumentCard({ document }: { document: Document }) {
                 disabled={isPending}
                 className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {isPending ? "Deleting..." : "Confirm"}
+                {isDeleting ? "Deleting..." : "Confirm"}
               </button>
               <button
                 type="button"
@@ -144,9 +188,9 @@ export function DocumentCard({ document }: { document: Document }) {
         </div>
       </div>
 
-      {deleteError ? (
+      {actionError ? (
         <p className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700">
-          Delete failed: {deleteError}
+          {actionError}
         </p>
       ) : null}
     </li>
