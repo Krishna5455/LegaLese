@@ -2,17 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { ContractUpload } from "@/components/dashboard/ContractUpload";
+import { DocumentList } from "@/components/dashboard/DocumentList";
 import { createClient } from "@/lib/supabase/server";
-import { type Document, getDocumentLabel } from "@/types/database";
+import type { Document } from "@/types/database";
 
 export const dynamic = "force-dynamic";
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -54,58 +49,49 @@ export default async function DashboardPage() {
           <p className="mt-2 text-muted">Signed in as {user.email}</p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-xl border border-border bg-surface p-6">
-            <h2 className="text-lg font-semibold text-foreground">
-              Uploaded contracts
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              Contract upload will be available in a future release.
-            </p>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-8">
+            <ContractUpload />
+          </div>
 
-            <div className="mt-6 rounded-lg border border-dashed border-border bg-background p-6">
-              {documentsError ? (
-                <p className="text-sm text-red-700">
-                  Unable to load documents: {documentsError.message}
-                </p>
-              ) : documents && documents.length > 0 ? (
-                <ul className="space-y-3">
-                  {(documents as Document[]).map((document) => (
-                    <li
-                      key={document.id}
-                      className="rounded-lg border border-border bg-surface px-4 py-3"
-                    >
-                      <p className="text-sm font-medium text-foreground">
-                        {getDocumentLabel(document)}
-                      </p>
-                      <p className="mt-1 text-xs text-muted">
-                        Added {formatDate(document.created_at)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted">
-                  No contracts uploaded yet. Your documents will appear here once
-                  upload is enabled.
-                </p>
-              )}
-            </div>
-          </section>
+          <div className="space-y-8">
+            <section className="rounded-xl border border-border bg-surface p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Uploaded contracts
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    Your stored agreements and legal documents.
+                  </p>
+                </div>
+                {documents && documents.length > 0 ? (
+                  <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
+                    {documents.length}
+                  </span>
+                ) : null}
+              </div>
 
-          <section className="rounded-xl border border-border bg-surface p-6">
-            <h2 className="text-lg font-semibold text-foreground">
-              Recent analyses
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              Analysis results will appear here after you upload and analyze a
-              contract.
-            </p>
+              <DocumentList
+                documents={documents as Document[] | null}
+                error={documentsError?.message}
+              />
+            </section>
 
-            <div className="mt-6 rounded-lg border border-dashed border-border bg-background p-6">
-              <p className="text-sm text-muted">No analyses yet.</p>
-            </div>
-          </section>
+            <section className="rounded-xl border border-border bg-surface p-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                Recent analyses
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                Analysis results will appear here after you analyze an uploaded
+                contract in a future release.
+              </p>
+
+              <div className="mt-6 rounded-lg border border-dashed border-border bg-background p-6">
+                <p className="text-sm text-muted">No analyses yet.</p>
+              </div>
+            </section>
+          </div>
         </div>
       </main>
     </div>
