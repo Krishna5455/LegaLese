@@ -1,4 +1,4 @@
-import { PDFParse } from "pdf-parse";
+import { extractText, getDocumentProxy } from "unpdf";
 
 import { cleanDocumentText } from "@/lib/documents/cleaner";
 import type { DocumentSection, ExtractionResult } from "@/types/processing";
@@ -10,41 +10,30 @@ export async function extractTextFromPdf(
     throw new Error("PDF buffer is empty.");
   }
 
-  const parser = new PDFParse({ data: buffer });
-
   try {
-    const textResult = await parser.getText();
-    const pages = textResult.pages || [];
+    const uint8Array = new Uint8Array(buffer);
+    const pdf = await getDocumentProxy(uint8Array);
+    const { totalPages, text } = await extractText(pdf, { mergePages: false });
+
+    const pagesArray = Array.isArray(text) ? text : [text];
     const sections: DocumentSection[] = [];
     const fullTextParts: string[] = [];
 
-    if (pages.length > 0) {
-      pages.forEach((page, index) => {
-        const pageNumber = page.num ?? index + 1;
-        const cleanedPageText = cleanDocumentText(page.text || "");
-        if (cleanedPageText) {
-          sections.push({
-            sectionIndex: sections.length,
-            pageNumber,
-            text: cleanedPageText,
-          });
-          fullTextParts.push(cleanedPageText);
-        }
-      });
-    } else if (textResult.text) {
-      const cleaned = cleanDocumentText(textResult.text);
+    pagesArray.forEach((pageText, index) => {
+      const pageNumber = index + 1;
+      const cleaned = cleanDocumentText(pageText || "");
       if (cleaned) {
         sections.push({
-          sectionIndex: 0,
-          pageNumber: 1,
+          sectionIndex: sections.length,
+          pageNumber,
           text: cleaned,
         });
         fullTextParts.push(cleaned);
       }
-    }
+    });
 
     const fullText = fullTextParts.join("\n\n");
-    const pageCount = textResult.total ?? (pages.length > 0 ? pages.length : 1);
+    const pageCount = totalPages || pagesArray.length || 1;
 
     return {
       pageCount,
@@ -54,7 +43,5 @@ export async function extractTextFromPdf(
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to parse PDF document: ${msg}`);
-  } finally {
-    await parser.destroy().catch(() => {});
   }
 }
