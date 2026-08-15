@@ -35,6 +35,12 @@ export async function extractTextFromPdf(
     const fullText = fullTextParts.join("\n\n");
     const pageCount = totalPages || pagesArray.length || 1;
 
+    // Scanned / Image-Only PDF Detection (< 10 words)
+    const wordCount = fullText.trim() ? fullText.trim().split(/\s+/).filter(Boolean).length : 0;
+    if (wordCount < 10) {
+      throw new Error("Scanned PDF detected. Please upload a digital PDF, DOCX, or TXT file.");
+    }
+
     return {
       pageCount,
       sections,
@@ -42,6 +48,18 @@ export async function extractTextFromPdf(
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+
+    // Password-Protected / Encrypted PDF Detection
+    if (/password|encrypt|decrypt|protected/i.test(msg)) {
+      throw new Error("Password-protected PDF detected. Please unlock the PDF and upload it again.");
+    }
+
+    // Preserve custom scanned PDF error or format user-friendly message
+    if (msg.includes("Scanned PDF detected")) {
+      throw new Error(msg);
+    }
+
     throw new Error(`Failed to parse PDF document: ${msg}`);
   }
 }
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo, useState } from "react";
 
@@ -275,9 +275,10 @@ export function ContractDetailWorkspace({
                       className="rounded-lg border border-border bg-background p-4 space-y-2"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2">
-                        <span className="text-xs font-semibold text-accent">
+                        <span className="text-xs font-semibold text-accent break-words min-w-0 max-w-full">
                           {clause.section}
                         </span>
+
                         <div className="flex items-center gap-3 text-xs text-muted">
                           {clause.clause_number && (
                             <span>Clause {clause.clause_number}</span>

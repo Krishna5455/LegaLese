@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+
+
 
 
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
@@ -87,6 +90,7 @@ export function DocumentCard({
   document: Document;
   existingAnalysis?: DetailedAnalysis | null;
 }) {
+  const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
@@ -101,6 +105,16 @@ export function DocumentCard({
   const isPending = isDeleting || isProcessing || isAnalyzing;
   const status = (document.status || "uploaded").toLowerCase();
   const hasAnalysis = localAnalysis != null;
+
+  // Auto-refresh when document status is 'processing' until terminal state
+  useEffect(() => {
+    if (status !== "processing") return;
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [status, router]);
+
 
   const handleDelete = () => {
     setActionError(null);

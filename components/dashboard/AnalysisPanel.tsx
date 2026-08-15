@@ -159,9 +159,10 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
                   className="rounded-lg border border-border bg-background p-3.5 space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-accent">
+                    <span className="text-xs font-semibold text-accent break-words min-w-0 max-w-full">
                       {clause.section}
                     </span>
+
                     {clause.clause_number && (
                       <span className="text-xs text-muted">
                         Clause {clause.clause_number}

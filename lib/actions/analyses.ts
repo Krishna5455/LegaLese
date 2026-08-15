@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { revalidatePath } from "next/cache";
 
@@ -133,9 +133,16 @@ export async function analyzeDocument(
       throw new Error("Extracted document artifact is unreadable.");
     }
 
-    if (!processedDoc.fullText || !processedDoc.fullText.trim()) {
-      throw new Error("No text content available in document to analyze.");
+    const wordCount = processedDoc.fullText
+      ? processedDoc.fullText.trim().split(/\s+/).filter(Boolean).length
+      : 0;
+
+    if (wordCount < 10) {
+      throw new Error(
+        "Document text content is insufficient for AI analysis (fewer than 10 words). Please upload a valid readable contract.",
+      );
     }
+
 
     // 4. Call Gemini AI API
     const geminiResult = await analyzeContractWithGemini(processedDoc);
