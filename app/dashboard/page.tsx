@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -132,71 +132,116 @@ export default async function DashboardPage() {
     }
   }
 
+  const totalCount = documents?.length ?? 0;
   const analyzedCount = Object.keys(analysesMap).length;
+  const highRiskCount = Object.values(analysesMap).filter(
+    (a) => a.risk_score === 3,
+  ).length;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-surface/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link
-            href="/"
-            className="text-xl font-semibold tracking-tight text-foreground"
-          >
-            LegaLese
+    <div className="flex min-h-screen flex-col bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 border border-accent/30 text-accent font-bold text-xs group-hover:bg-accent group-hover:text-white transition-colors">
+              §
+            </div>
+            <span className="text-base font-bold tracking-tight text-foreground">
+              LegaLese
+            </span>
           </Link>
-          <SignOutButton />
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-mono text-muted hidden sm:inline-block">
+              {user.email}
+            </span>
+            <SignOutButton />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
-        <div className="mb-10">
-          <p className="text-sm font-medium uppercase tracking-widest text-accent">
-            Dashboard
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-foreground">
-            Welcome back
-          </h1>
-          <p className="mt-2 text-muted">Signed in as {user.email}</p>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-8">
-            <ContractUpload />
-          </div>
-
-          <div className="space-y-8">
-            <section className="rounded-xl border border-border bg-surface p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Uploaded contracts
-                  </h2>
-                  <p className="mt-1 text-sm text-muted">
-                    Your stored agreements and legal documents.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {documents && documents.length > 0 ? (
-                    <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
-                      {documents.length}
-                    </span>
-                  ) : null}
-                  {analyzedCount > 0 && (
-                    <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                      {analyzedCount} analyzed
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <DocumentList
-                documents={documents as Document[] | null}
-                error={documentsError?.message}
-                analysesMap={analysesMap}
-              />
-            </section>
+      {/* Main Workspace */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 space-y-8">
+        {/* Page Title Header */}
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Contract Dashboard
+            </h1>
+            <p className="text-xs text-muted">
+              Manage your legal agreements, extractions, and AI analyses.
+            </p>
           </div>
         </div>
+
+        {/* 1. METRICS TOP BANNER */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Total Contracts
+            </p>
+            <p className="mt-2 text-2xl font-bold text-foreground">
+              {totalCount}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Analyzed
+            </p>
+            <p className="mt-2 text-2xl font-bold text-accent">
+              {analyzedCount}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+              High Risk
+            </p>
+            <p className="mt-2 text-2xl font-bold text-red-400">
+              {highRiskCount}
+            </p>
+          </div>
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Engine Status
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono text-foreground font-semibold">
+                Gemini 3.6 Ready
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. COMPACT CONTRACT UPLOAD */}
+        <section className="space-y-3">
+          <ContractUpload />
+        </section>
+
+        {/* 3. CONTRACT TABLE */}
+        <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-border/60 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-foreground">
+                Your Contracts
+              </h2>
+              <p className="text-xs text-muted">
+                View stored agreements and access deep-dive contract reviews.
+              </p>
+            </div>
+            {documents && documents.length > 0 && (
+              <span className="rounded-full bg-accent/10 border border-accent/20 px-2.5 py-0.5 text-xs font-mono font-semibold text-accent">
+                {documents.length} Total
+              </span>
+            )}
+          </div>
+
+          <DocumentList
+            documents={documents as Document[] | null}
+            error={documentsError?.message}
+            analysesMap={analysesMap}
+          />
+        </section>
       </main>
     </div>
   );

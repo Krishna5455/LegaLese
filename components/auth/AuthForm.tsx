@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState } from "react";
 
@@ -34,18 +34,18 @@ export function AuthForm({
   });
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-8 shadow-sm">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-        <p className="mt-2 text-sm text-muted">{description}</p>
+    <div className="rounded-xl border border-border bg-surface p-8 shadow-sm max-w-md w-full mx-auto">
+      <div className="mb-8 text-center sm:text-left">
+        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <p className="mt-2 text-xs text-muted leading-relaxed">{description}</p>
       </div>
 
       <form action={formAction} className="space-y-5">
         {children}
 
         <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium">
-            Email
+          <label htmlFor="email" className="mb-2 block text-xs font-semibold text-foreground">
+            Email address
           </label>
           <input
             id="email"
@@ -53,12 +53,13 @@ export function AuthForm({
             type="email"
             autoComplete="email"
             required
-            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+            placeholder="you@company.com"
+            className="w-full rounded-lg border border-border bg-surface-inset px-3.5 py-2.5 text-xs text-foreground placeholder:text-subtle outline-none focus:border-accent focus:ring-1 focus:ring-accent/40 transition-colors"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium">
+          <label htmlFor="password" className="mb-2 block text-xs font-semibold text-foreground">
             Password
           </label>
           <input
@@ -68,22 +69,23 @@ export function AuthForm({
             autoComplete={passwordAutoComplete}
             required
             minLength={6}
-            className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+            placeholder="••••••••••••"
+            className="w-full rounded-lg border border-border bg-surface-inset px-3.5 py-2.5 text-xs text-foreground placeholder:text-subtle outline-none focus:border-accent focus:ring-1 focus:ring-accent/40 transition-colors"
           />
         </div>
 
         {state.error ? (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-400">
             {state.error}
-          </p>
+          </div>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Please wait..." : submitLabel}
+        <Button type="submit" variant="primary" className="w-full py-3 text-xs" disabled={pending}>
+          {pending ? "Authenticating..." : submitLabel}
         </Button>
       </form>
 
-      {footer ? <div className="mt-6">{footer}</div> : null}
+      {footer ? <div className="mt-6 text-center text-xs text-muted">{footer}</div> : null}
     </div>
   );
 }
