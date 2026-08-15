@@ -1,12 +1,18 @@
-import { DocumentCard } from "@/components/dashboard/DocumentCard";
+﻿import { DocumentCard } from "@/components/dashboard/DocumentCard";
+import type { AnalysisWithDetails } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 type DocumentListProps = {
   documents: Document[] | null;
   error?: string | null;
+  analysesMap?: Record<string, AnalysisWithDetails>;
 };
 
-export function DocumentList({ documents, error }: DocumentListProps) {
+export function DocumentList({
+  documents,
+  error,
+  analysesMap = {},
+}: DocumentListProps) {
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
@@ -50,7 +56,11 @@ export function DocumentList({ documents, error }: DocumentListProps) {
   return (
     <ul className="space-y-3">
       {documents.map((doc) => (
-        <DocumentCard key={doc.id} document={doc} />
+        <DocumentCard
+          key={doc.id}
+          document={doc}
+          existingAnalysis={analysesMap[doc.id] ?? null}
+        />
       ))}
     </ul>
   );

@@ -1,4 +1,4 @@
-# LegaLese
+﻿# LegaLese
 
 **Understand before you sign.**
 
@@ -11,16 +11,19 @@ LegaLese is a legal technology product that helps people review contracts in pla
 - [Tailwind CSS](https://tailwindcss.com/) — Utility-first styling
 - [ESLint](https://eslint.org/) — Linting via `eslint-config-next`
 - [unpdf](https://github.com/unjs/unpdf) & [mammoth](https://github.com/mwilliamson/mammoth.js) — Document parsing
+- [Zod](https://zod.dev/) — Runtime schema validation
+- [@google/generative-ai](https://www.npmjs.com/package/@google/generative-ai) — Gemini AI integration
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 20.x or later
 - npm 10.x or later
 - A Supabase project with the LegaLese schema and private `contracts` Storage bucket provisioned
+- A Google Gemini API key (obtain from [Google AI Studio](https://aistudio.google.com/app/apikey))
 
 ## Environment variables
 
-Copy the example file and fill in your Supabase project values:
+Copy the example file and fill in your values:
 
 ```bash
 cp .env.example .env.local
@@ -33,14 +36,31 @@ Required variables:
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL (browser-safe) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (browser-safe) |
 | `NEXT_PUBLIC_SITE_URL` | Optional site URL for auth redirects (defaults to `http://localhost:3000`) |
+| `GEMINI_API_KEY` | **Server-only.** Gemini API key. Never use `NEXT_PUBLIC_` prefix. |
+| `GEMINI_MODEL` | Optional. Gemini model name (default: `gemini-2.0-flash`) |
+| `MAX_ANALYSIS_CHARS` | Optional. Maximum document characters sent to AI (default: `200000`) |
 
-Never commit `.env.local`. Never expose the Supabase service-role key in client code.
+> **Security note**: Never commit `.env.local`. Never expose `GEMINI_API_KEY` to client code. The AI API key is used only in server actions.
+
+## Database Setup
+
+### Phase 2 — `documents` table
+Apply your existing Supabase schema for the `documents` table with RLS policies.
+
+### Phase 5 — Analysis tables
+Apply the migration at `supabase/migrations/001_create_analyses_schema.sql` in your Supabase SQL editor:
+
+```sql
+-- Run in Supabase Dashboard → SQL Editor
+-- File: supabase/migrations/001_create_analyses_schema.sql
+```
+
+This creates: `analyses`, `findings`, `key_terms`, `obligations`, `questions` with RLS and indexes.
 
 ## Storage Configuration
 
-The private `contracts` Storage bucket stores raw contract files (`.pdf`, `.docx`, `.txt`) and the server-generated structured extraction artifacts (`<storage_path>.extracted.json`).
-
-To ensure the private `contracts` bucket accepts both raw documents and extracted JSON artifacts, ensure `allowed_mime_types` includes `application/json`:
+The private `contracts` Storage bucket stores raw contract files and extraction artifacts.
+Ensure `allowed_mime_types` includes `application/json`:
 
 ```sql
 UPDATE storage.buckets
@@ -83,14 +103,25 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```
 app/           Next.js App Router pages, layouts, and auth routes
 components/    Reusable UI and auth components
-lib/           Supabase clients, document extractors/processors, and server actions
-types/         Shared database and processing types
+lib/
+  actions/     Server actions (auth, documents, analyses)
+  ai/          Gemini AI client, prompt builder, Zod schema, risk scorer
+  documents/   Document extraction pipeline (PDF/DOCX/TXT)
+  supabase/    Supabase client factories
+supabase/
+  migrations/  SQL migration files for the LegaLese schema
+types/         Shared TypeScript types (database, processing, analysis)
 middleware.ts  Session refresh and route protection
 ```
 
 ## Status
 
-- **Phase 1**: Next.js foundation and landing page (COMPLETE)
-- **Phase 2**: Supabase authentication and protected dashboard (COMPLETE)
-- **Phase 3**: Secure contract upload and document management (COMPLETE)
-- **Phase 4**: Document processing pipeline & structured text extraction (COMPLETE)
+- **Phase 1**: Next.js foundation and landing page ✅
+- **Phase 2**: Supabase authentication and protected dashboard ✅
+- **Phase 3**: Secure contract upload and document management ✅
+- **Phase 4**: Document processing pipeline & structured text extraction ✅
+- **Phase 5**: AI contract analysis with Gemini — evidence-backed findings, key terms, obligations, questions ✅
+
+## Legal disclaimer
+
+LegaLese is a contract **understanding** tool. It is not a law firm and does not provide legal advice. Always consult a qualified legal professional for significant decisions.

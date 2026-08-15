@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 
+import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
+import { analyzeDocument } from "@/lib/actions/analyses";
 import { deleteDocument, processDocument } from "@/lib/actions/documents";
 import { formatBytes } from "@/lib/documents/validation";
+import type { AnalysisWithDetails } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 function formatDate(value: string) {
@@ -75,14 +78,29 @@ function getStatusBadge(status?: string | null) {
   );
 }
 
-export function DocumentCard({ document }: { document: Document }) {
+export function DocumentCard({
+  document,
+  existingAnalysis,
+}: {
+  document: Document;
+  existingAnalysis?: AnalysisWithDetails | null;
+}) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [isProcessing, startProcessTransition] = useTransition();
+  const [isAnalyzing, startAnalyzeTransition] = useTransition();
 
-  const isPending = isDeleting || isProcessing;
+  // Track the analysis result in local state so the panel can appear without
+  // a full page reload (the server will also revalidate the dashboard path).
+  const [localAnalysis, setLocalAnalysis] = useState<AnalysisWithDetails | null>(
+    existingAnalysis ?? null,
+  );
+  const [showAnalysis, setShowAnalysis] = useState(false);
+
+  const isPending = isDeleting || isProcessing || isAnalyzing;
   const status = (document.status || "uploaded").toLowerCase();
+  const hasCompleteAnalysis = localAnalysis?.status === "complete";
 
   const handleDelete = () => {
     setActionError(null);
@@ -101,6 +119,19 @@ export function DocumentCard({ document }: { document: Document }) {
       const result = await processDocument(document.id);
       if (result.error) {
         setActionError(result.error);
+      }
+    });
+  };
+
+  const handleAnalyze = () => {
+    setActionError(null);
+    startAnalyzeTransition(async () => {
+      const result = await analyzeDocument(document.id);
+      if (result.error) {
+        setActionError(result.error);
+      } else if (result.analysis) {
+        setLocalAnalysis(result.analysis);
+        setShowAnalysis(true);
       }
     });
   };
@@ -128,7 +159,7 @@ export function DocumentCard({ document }: { document: Document }) {
           <div className="flex items-center gap-2">
             {getStatusBadge(document.status)}
 
-            {/* Retry / Process Button for failed or pending documents */}
+            {/* Process / Retry button for documents not yet processed */}
             {(status === "uploaded" || status === "failed") && (
               <button
                 type="button"
@@ -137,7 +168,62 @@ export function DocumentCard({ document }: { document: Document }) {
                 className="rounded border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-background disabled:opacity-50"
                 title="Extract and process text"
               >
-                {isProcessing ? "Processing..." : status === "failed" ? "Retry" : "Process"}
+                {isProcessing
+                  ? "Processing..."
+                  : status === "failed"
+                    ? "Retry"
+                    : "Process"}
+              </button>
+            )}
+
+            {/* Analyze button — only shown for fully processed documents */}
+            {status === "complete" && !hasCompleteAnalysis && (
+              <button
+                type="button"
+                onClick={handleAnalyze}
+                disabled={isPending}
+                className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
+                title="Analyze this contract with AI"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <svg
+                      className="h-3 w-3 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Analyzing…
+                  </>
+                ) : (
+                  "Analyze"
+                )}
+              </button>
+            )}
+
+            {/* View / Hide Analysis toggle — shown when analysis is complete */}
+            {hasCompleteAnalysis && (
+              <button
+                type="button"
+                onClick={() => setShowAnalysis((v) => !v)}
+                disabled={isPending}
+                className="rounded border border-accent/30 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
+              >
+                {showAnalysis ? "Hide Analysis" : "View Analysis"}
               </button>
             )}
           </div>
@@ -193,6 +279,12 @@ export function DocumentCard({ document }: { document: Document }) {
           {actionError}
         </p>
       ) : null}
+
+      {/* Inline analysis panel */}
+      {showAnalysis && localAnalysis && (
+        <AnalysisPanel analysis={localAnalysis} />
+      )}
     </li>
   );
 }
+

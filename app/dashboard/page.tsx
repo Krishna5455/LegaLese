@@ -1,10 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ContractUpload } from "@/components/dashboard/ContractUpload";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { createClient } from "@/lib/supabase/server";
+import type { AnalysisWithDetails } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +20,88 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Fetch documents
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
     .select("*")
     .order("created_at", { ascending: false });
+
+  // Fetch the most recent complete analysis for each document.
+  // We query all complete analyses for the user and build a map keyed by document_id.
+  // Using a single query is more efficient than one query per document.
+  let analysesMap: Record<string, AnalysisWithDetails> = {};
+
+  if (documents && documents.length > 0) {
+    const documentIds = documents.map((d: Document) => d.id);
+
+    const [
+      { data: analyses },
+      { data: findings },
+      { data: keyTerms },
+      { data: obligations },
+      { data: questions },
+    ] = await Promise.all([
+      supabase
+        .from("analyses")
+        .select("*")
+        .in("document_id", documentIds)
+        .eq("user_id", user.id)
+        .eq("status", "complete")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("findings")
+        .select("*")
+        .in("document_id", documentIds)
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("key_terms")
+        .select("*")
+        .in("document_id", documentIds)
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("obligations")
+        .select("*")
+        .in("document_id", documentIds)
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("questions")
+        .select("*")
+        .in("document_id", documentIds)
+        .eq("user_id", user.id)
+        .order("sort_order", { ascending: true }),
+    ]);
+
+    if (analyses && analyses.length > 0) {
+      // Keep only the most recent complete analysis per document
+      // (analyses are ordered newest-first so the first per document_id wins)
+      const seenDocIds = new Set<string>();
+      for (const analysis of analyses) {
+        if (seenDocIds.has(analysis.document_id)) continue;
+        seenDocIds.add(analysis.document_id);
+
+        analysesMap[analysis.document_id] = {
+          ...analysis,
+          findings: (findings ?? []).filter(
+            (f) => f.analysis_id === analysis.id,
+          ),
+          key_terms: (keyTerms ?? []).filter(
+            (kt) => kt.analysis_id === analysis.id,
+          ),
+          obligations: (obligations ?? []).filter(
+            (o) => o.analysis_id === analysis.id,
+          ),
+          questions: (questions ?? []).filter(
+            (q) => q.analysis_id === analysis.id,
+          ),
+        } as AnalysisWithDetails;
+      }
+    }
+  }
+
+  const analyzedCount = Object.keys(analysesMap).length;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -65,31 +144,25 @@ export default async function DashboardPage() {
                     Your stored agreements and legal documents.
                   </p>
                 </div>
-                {documents && documents.length > 0 ? (
-                  <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
-                    {documents.length}
-                  </span>
-                ) : null}
+                <div className="flex items-center gap-2">
+                  {documents && documents.length > 0 ? (
+                    <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold text-accent">
+                      {documents.length}
+                    </span>
+                  ) : null}
+                  {analyzedCount > 0 && (
+                    <span className="rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                      {analyzedCount} analyzed
+                    </span>
+                  )}
+                </div>
               </div>
 
               <DocumentList
                 documents={documents as Document[] | null}
                 error={documentsError?.message}
+                analysesMap={analysesMap}
               />
-            </section>
-
-            <section className="rounded-xl border border-border bg-surface p-6">
-              <h2 className="text-lg font-semibold text-foreground">
-                Recent analyses
-              </h2>
-              <p className="mt-2 text-sm text-muted">
-                Analysis results will appear here after you analyze an uploaded
-                contract in a future release.
-              </p>
-
-              <div className="mt-6 rounded-lg border border-dashed border-border bg-background p-6">
-                <p className="text-sm text-muted">No analyses yet.</p>
-              </div>
             </section>
           </div>
         </div>
