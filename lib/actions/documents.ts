@@ -320,11 +320,12 @@ export async function deleteDocument(
       };
     }
 
-    // 2. Remove raw storage object and extracted JSON artifact from 'contracts' bucket
+    // 2. Remove storage objects (raw file, extracted JSON, and report MD) from 'contracts' bucket
     if (doc.storage_path) {
       const filesToRemove = [
         doc.storage_path,
         `${doc.storage_path}.extracted.json`,
+        `${user.id}/reports/${documentId}_report.md`,
       ];
 
       const { error: storageRemoveError } = await supabase.storage
@@ -336,7 +337,11 @@ export async function deleteDocument(
       }
     }
 
+    // 2b. Clean up associated reports DB records
+    await supabase.from("reports").delete().eq("document_id", documentId).eq("user_id", user.id);
+
     // 3. Delete database record
+
     const { error: dbDeleteError } = await supabase
       .from("documents")
       .delete()

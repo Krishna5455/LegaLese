@@ -1,6 +1,8 @@
-﻿"use client";
+"use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
+
 
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
 import { analyzeDocument } from "@/lib/actions/analyses";
@@ -213,18 +215,31 @@ export function DocumentCard({
               </button>
             )}
 
-            {/* View / Hide Analysis toggle — shown when analysis exists */}
+            {/* View / Hide Analysis toggle & Open Full Analysis link — shown when analysis exists */}
             {hasAnalysis && (
-              <button
-                type="button"
-                onClick={() => setShowAnalysis((v) => !v)}
-                disabled={isPending}
-                className="rounded border border-accent/30 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
-              >
-                {showAnalysis ? "Hide Analysis" : "View Analysis"}
-              </button>
+              <>
+                <Link
+                  href={`/dashboard/documents/${document.id}`}
+                  className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover transition-colors"
+                  title="Open dedicated analysis workspace"
+                >
+                  Open Full Analysis
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowAnalysis((v) => !v)}
+                  disabled={isPending}
+                  className="rounded border border-accent/30 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
+                >
+                  {showAnalysis ? "Hide Quick View" : "Quick View"}
+                </button>
+              </>
             )}
           </div>
+
 
           {!isConfirming ? (
             <button
