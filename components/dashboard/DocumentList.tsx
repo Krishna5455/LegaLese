@@ -1,11 +1,11 @@
 ﻿import { DocumentCard } from "@/components/dashboard/DocumentCard";
-import type { AnalysisWithDetails } from "@/types/analysis";
+import type { DetailedAnalysis } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 type DocumentListProps = {
   documents: Document[] | null;
   error?: string | null;
-  analysesMap?: Record<string, AnalysisWithDetails>;
+  analysesMap?: Record<string, DetailedAnalysis>;
 };
 
 export function DocumentList({

@@ -37,25 +37,23 @@ Required variables:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key (browser-safe) |
 | `NEXT_PUBLIC_SITE_URL` | Optional site URL for auth redirects (defaults to `http://localhost:3000`) |
 | `GEMINI_API_KEY` | **Server-only.** Gemini API key. Never use `NEXT_PUBLIC_` prefix. |
-| `GEMINI_MODEL` | Optional. Gemini model name (default: `gemini-2.0-flash`) |
+| `GEMINI_MODEL` | Optional. Gemini model name (default: `gemini-3.6-flash`) |
 | `MAX_ANALYSIS_CHARS` | Optional. Maximum document characters sent to AI (default: `200000`) |
 
 > **Security note**: Never commit `.env.local`. Never expose `GEMINI_API_KEY` to client code. The AI API key is used only in server actions.
 
 ## Database Setup
 
-### Phase 2 — `documents` table
-Apply your existing Supabase schema for the `documents` table with RLS policies.
+The database schema is pre-provisioned in Supabase, consisting of:
+- `documents` — Stores uploaded document metadata
+- `analyses` — Stores top-level AI analysis result JSON and overall risk score
+- `clauses` — Stores extracted key contract clauses with section & page numbers
+- `findings` — Stores AI-identified risks linked to clauses, with inline questions
+- `key_terms` — Stores defined terms linked to source clauses
+- `obligations` — Stores duties & responsibilities linked to source clauses
+- `reports` — Optional generated report records
 
-### Phase 5 — Analysis tables
-Apply the migration at `supabase/migrations/001_create_analyses_schema.sql` in your Supabase SQL editor:
-
-```sql
--- Run in Supabase Dashboard → SQL Editor
--- File: supabase/migrations/001_create_analyses_schema.sql
-```
-
-This creates: `analyses`, `findings`, `key_terms`, `obligations`, `questions` with RLS and indexes.
+Row Level Security (RLS) policies enforce authenticated user access scoped to document ownership.
 
 ## Storage Configuration
 
@@ -109,7 +107,7 @@ lib/
   documents/   Document extraction pipeline (PDF/DOCX/TXT)
   supabase/    Supabase client factories
 supabase/
-  migrations/  SQL migration files for the LegaLese schema
+  migrations/  Reference documentation for Supabase schema
 types/         Shared TypeScript types (database, processing, analysis)
 middleware.ts  Session refresh and route protection
 ```
@@ -120,7 +118,7 @@ middleware.ts  Session refresh and route protection
 - **Phase 2**: Supabase authentication and protected dashboard ✅
 - **Phase 3**: Secure contract upload and document management ✅
 - **Phase 4**: Document processing pipeline & structured text extraction ✅
-- **Phase 5**: AI contract analysis with Gemini — evidence-backed findings, key terms, obligations, questions ✅
+- **Phase 5**: AI contract analysis with Gemini — evidence-backed findings, clauses, key terms, obligations ✅
 
 ## Legal disclaimer
 

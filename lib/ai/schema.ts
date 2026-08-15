@@ -1,54 +1,54 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 
 // ─── Enum schemas ─────────────────────────────────────────────────────────────
 
-export const RiskLevelSchema = z.enum(["info", "low", "medium", "high", "critical"]);
-export const ConfidenceSchema = z.enum(["low", "medium", "high"]);
+export const RiskLevelSchema = z.enum([
+  "informational",
+  "low",
+  "medium",
+  "high",
+]);
 
-// ─── Child schemas ────────────────────────────────────────────────────────────
+// ─── AI Response Sub-schemas ──────────────────────────────────────────────────
+
+export const AIClauseSchema = z.object({
+  section: z.string().min(1).max(200),
+  clauseNumber: z.string().max(50).nullable().optional(),
+  text: z.string().min(1).max(5000),
+  pageNumber: z.number().int().positive().nullable().optional(),
+});
 
 export const AIFindingSchema = z.object({
   category: z.string().min(1).max(100),
   riskLevel: RiskLevelSchema,
   explanation: z.string().min(1).max(2000),
   whyItMatters: z.string().max(1000).nullable().optional(),
-  evidenceText: z.string().max(2000).nullable().optional(),
-  sourceSection: z.string().max(200).nullable().optional(),
-  // pageNumber is 1-indexed; null for DOCX/TXT documents
-  pageNumber: z.number().int().positive().nullable().optional(),
-  sectionIndex: z.number().int().min(0).nullable().optional(),
-  confidence: ConfidenceSchema,
+  clauseIndex: z.number().int().min(0).nullable().optional(),
+  questions: z.array(z.string().max(500)).max(10).optional().default([]),
+  confidence: z.number().min(0).max(1).nullable().optional(),
 });
 
 export const AIKeyTermSchema = z.object({
   term: z.string().min(1).max(200),
-  definition: z.string().min(1).max(1000),
-  sourceSection: z.string().max(200).nullable().optional(),
-  pageNumber: z.number().int().positive().nullable().optional(),
-  sectionIndex: z.number().int().min(0).nullable().optional(),
+  value: z.string().min(1).max(1000),
+  clauseIndex: z.number().int().min(0).nullable().optional(),
 });
 
 export const AIObligationSchema = z.object({
-  party: z.string().max(100).nullable().optional(),
   description: z.string().min(1).max(1000),
-  sourceSection: z.string().max(200).nullable().optional(),
-  pageNumber: z.number().int().positive().nullable().optional(),
-  sectionIndex: z.number().int().min(0).nullable().optional(),
+  responsibleParty: z.string().max(100).nullable().optional(),
+  deadline: z.string().max(200).nullable().optional(),
+  clauseIndex: z.number().int().min(0).nullable().optional(),
 });
 
-export const AIQuestionSchema = z.object({
-  questionText: z.string().min(1).max(500),
-  context: z.string().max(500).nullable().optional(),
-});
-
-// ─── Root analysis output schema ──────────────────────────────────────────────
+// ─── Root AI Analysis Output Schema ───────────────────────────────────────────
 
 export const AIAnalysisOutputSchema = z.object({
   summary: z.string().min(1).max(3000),
-  findings: z.array(AIFindingSchema).max(30),
-  keyTerms: z.array(AIKeyTermSchema).max(25),
-  obligations: z.array(AIObligationSchema).max(25),
-  questions: z.array(AIQuestionSchema).max(10),
+  clauses: z.array(AIClauseSchema).max(30).default([]),
+  findings: z.array(AIFindingSchema).max(30).default([]),
+  keyTerms: z.array(AIKeyTermSchema).max(25).default([]),
+  obligations: z.array(AIObligationSchema).max(25).default([]),
 });
 
 export type AIAnalysisOutputSchema = z.infer<typeof AIAnalysisOutputSchema>;

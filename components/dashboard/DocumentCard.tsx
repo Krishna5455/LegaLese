@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useTransition } from "react";
 
@@ -6,7 +6,7 @@ import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
 import { analyzeDocument } from "@/lib/actions/analyses";
 import { deleteDocument, processDocument } from "@/lib/actions/documents";
 import { formatBytes } from "@/lib/documents/validation";
-import type { AnalysisWithDetails } from "@/types/analysis";
+import type { DetailedAnalysis } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 function formatDate(value: string) {
@@ -83,7 +83,7 @@ export function DocumentCard({
   existingAnalysis,
 }: {
   document: Document;
-  existingAnalysis?: AnalysisWithDetails | null;
+  existingAnalysis?: DetailedAnalysis | null;
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -91,16 +91,14 @@ export function DocumentCard({
   const [isProcessing, startProcessTransition] = useTransition();
   const [isAnalyzing, startAnalyzeTransition] = useTransition();
 
-  // Track the analysis result in local state so the panel can appear without
-  // a full page reload (the server will also revalidate the dashboard path).
-  const [localAnalysis, setLocalAnalysis] = useState<AnalysisWithDetails | null>(
+  const [localAnalysis, setLocalAnalysis] = useState<DetailedAnalysis | null>(
     existingAnalysis ?? null,
   );
   const [showAnalysis, setShowAnalysis] = useState(false);
 
   const isPending = isDeleting || isProcessing || isAnalyzing;
   const status = (document.status || "uploaded").toLowerCase();
-  const hasCompleteAnalysis = localAnalysis?.status === "complete";
+  const hasAnalysis = localAnalysis != null;
 
   const handleDelete = () => {
     setActionError(null);
@@ -176,8 +174,8 @@ export function DocumentCard({
               </button>
             )}
 
-            {/* Analyze button — only shown for fully processed documents */}
-            {status === "complete" && !hasCompleteAnalysis && (
+            {/* Analyze button — shown for fully processed documents without an analysis */}
+            {status === "complete" && !hasAnalysis && (
               <button
                 type="button"
                 onClick={handleAnalyze}
@@ -215,8 +213,8 @@ export function DocumentCard({
               </button>
             )}
 
-            {/* View / Hide Analysis toggle — shown when analysis is complete */}
-            {hasCompleteAnalysis && (
+            {/* View / Hide Analysis toggle — shown when analysis exists */}
+            {hasAnalysis && (
               <button
                 type="button"
                 onClick={() => setShowAnalysis((v) => !v)}
@@ -287,4 +285,3 @@ export function DocumentCard({
     </li>
   );
 }
-

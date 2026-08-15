@@ -1,136 +1,127 @@
-﻿// ─── Risk / Confidence enumerations ──────────────────────────────────────────
+// ─── Risk / Confidence enumerations ──────────────────────────────────────────
 
-export type RiskLevel = "info" | "low" | "medium" | "high" | "critical";
-export type Confidence = "low" | "medium" | "high";
-export type OverallRisk = "low" | "medium" | "high" | "critical";
-export type AnalysisStatus = "pending" | "analyzing" | "complete" | "failed";
+export type RiskLevel = "informational" | "low" | "medium" | "high";
 
-// ─── Database row types ───────────────────────────────────────────────────────
+// ─── Database Row Types (matches exact remote Supabase schema) ───────────────
 
-export type Analysis = {
+export type AnalysisRow = {
   id: string;
   document_id: string;
   user_id: string;
-  status: AnalysisStatus;
-  error_message?: string | null;
-  summary?: string | null;
-  overall_risk?: OverallRisk | null;
-  was_truncated: boolean;
-  model_used?: string | null;
-  input_tokens?: number | null;
-  output_tokens?: number | null;
-  analyzed_at?: string | null;
+  risk_score: number | null;
+  summary: string | null;
+  result: Record<string, unknown>; // JSONB structured output
+  model: string;
   created_at: string;
-  updated_at: string;
 };
 
-export type Finding = {
+export type ClauseRow = {
   id: string;
-  analysis_id: string;
   document_id: string;
-  user_id: string;
-  category: string;
+  section: string;
+  clause_number: string | null;
+  text: string;
+  page_number: number | null;
+  created_at: string;
+};
+
+export type FindingRow = {
+  id: string;
+  document_id: string;
+  clause_id: string | null;
   risk_level: RiskLevel;
+  category: string;
   explanation: string;
-  why_it_matters?: string | null;
-  evidence_text?: string | null;
-  source_section?: string | null;
-  page_number?: number | null;
-  section_index?: number | null;
-  confidence?: Confidence | null;
-  sort_order: number;
+  why_it_matters: string | null;
+  questions: string[]; // Stored as JSONB in DB
+  confidence: number | null;
   created_at: string;
 };
 
-export type KeyTerm = {
+export type KeyTermRow = {
   id: string;
-  analysis_id: string;
   document_id: string;
-  user_id: string;
   term: string;
-  definition: string;
-  source_section?: string | null;
-  page_number?: number | null;
-  section_index?: number | null;
-  sort_order: number;
+  value: string;
+  source_clause_id: string | null;
   created_at: string;
 };
 
-export type Obligation = {
+export type ObligationRow = {
   id: string;
-  analysis_id: string;
   document_id: string;
-  user_id: string;
-  party?: string | null;
   description: string;
-  source_section?: string | null;
-  page_number?: number | null;
-  section_index?: number | null;
-  sort_order: number;
+  responsible_party: string | null;
+  deadline: string | null;
+  source_clause_id: string | null;
   created_at: string;
 };
 
-export type Question = {
+export type ReportRow = {
   id: string;
-  analysis_id: string;
   document_id: string;
   user_id: string;
-  question_text: string;
-  context?: string | null;
-  sort_order: number;
+  file_path: string | null;
   created_at: string;
 };
 
-// ─── Joined type for full analysis display ────────────────────────────────────
+// ─── Joined Type for Full Dashboard Display ───────────────────────────────────
 
-export type AnalysisWithDetails = Analysis & {
-  findings: Finding[];
-  key_terms: KeyTerm[];
-  obligations: Obligation[];
-  questions: Question[];
+export type FindingWithClause = FindingRow & {
+  clause?: ClauseRow | null;
 };
 
-// ─── AI output types (before DB insertion) ───────────────────────────────────
-// These represent the raw structured JSON returned by Gemini,
-// validated by Zod before any database writes.
+export type KeyTermWithClause = KeyTermRow & {
+  clause?: ClauseRow | null;
+};
+
+export type ObligationWithClause = ObligationRow & {
+  clause?: ClauseRow | null;
+};
+
+export type DetailedAnalysis = AnalysisRow & {
+  clauses: ClauseRow[];
+  findings: FindingWithClause[];
+  key_terms: KeyTermWithClause[];
+  obligations: ObligationWithClause[];
+};
+
+// ─── AI Output Schema Types (for Gemini response parsing) ────────────────────
+
+export type AIClause = {
+  section: string;
+  clauseNumber?: string | null;
+  text: string;
+  pageNumber?: number | null;
+};
 
 export type AIFinding = {
   category: string;
   riskLevel: RiskLevel;
   explanation: string;
   whyItMatters?: string | null;
-  evidenceText?: string | null;
-  sourceSection?: string | null;
-  pageNumber?: number | null;
-  sectionIndex?: number | null;
-  confidence: Confidence;
+  clauseIndex?: number | null; // 0-based index pointing to AIClause list
+  questions?: string[] | null;
+  confidence?: number | null; // e.g. 0.0 to 1.0
 };
 
 export type AIKeyTerm = {
   term: string;
-  definition: string;
-  sourceSection?: string | null;
-  pageNumber?: number | null;
-  sectionIndex?: number | null;
+  value: string; // Plain-English definition/value
+  clauseIndex?: number | null;
 };
 
 export type AIObligation = {
-  party?: string | null;
   description: string;
-  sourceSection?: string | null;
-  pageNumber?: number | null;
-  sectionIndex?: number | null;
-};
-
-export type AIQuestion = {
-  questionText: string;
-  context?: string | null;
+  responsibleParty?: string | null;
+  deadline?: string | null;
+  clauseIndex?: number | null;
 };
 
 export type AIAnalysisOutput = {
   summary: string;
+  clauses: AIClause[];
   findings: AIFinding[];
   keyTerms: AIKeyTerm[];
   obligations: AIObligation[];
-  questions: AIQuestion[];
 };

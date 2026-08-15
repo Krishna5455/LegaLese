@@ -1,32 +1,50 @@
-﻿import type { AIFinding, OverallRisk, RiskLevel } from "@/types/analysis";
+import type { AIFinding, RiskLevel } from "@/types/analysis";
+
+const RISK_SCORE_MAP: Record<RiskLevel, number> = {
+  informational: 0,
+  low: 1,
+  medium: 2,
+  high: 3,
+};
 
 /**
- * Ordered from lowest to highest severity.
- * The overall risk is determined by the highest-severity finding.
- * The AI does NOT set the overall score — this is deterministic application logic.
- */
-const RISK_ORDER: RiskLevel[] = ["info", "low", "medium", "high", "critical"];
-
-/**
- * Computes the overall contract risk level from a list of AI-identified findings.
+ * Computes a deterministic overall risk score (integer 0–3) from AI findings.
  *
  * Rules:
- * - No findings → "low"
- * - Only "info" findings → "low"
- * - Otherwise → the highest risk level present among findings
+ * - No findings → 0 (Informational)
+ * - Returns the highest numeric score present among findings (informational=0, low=1, medium=2, high=3).
+ * - The AI does NOT compute this score — it is strictly deterministic application logic.
  */
-export function computeOverallRisk(findings: AIFinding[]): OverallRisk {
-  if (findings.length === 0) return "low";
+export function computeRiskScore(findings: AIFinding[]): number {
+  if (!findings || findings.length === 0) return 0;
 
-  let maxIndex = 0;
+  let maxScore = 0;
   for (const finding of findings) {
-    const idx = RISK_ORDER.indexOf(finding.riskLevel);
-    if (idx > maxIndex) {
-      maxIndex = idx;
+    const score = RISK_SCORE_MAP[finding.riskLevel] ?? 0;
+    if (score > maxScore) {
+      maxScore = score;
     }
   }
 
-  const maxRisk = RISK_ORDER[maxIndex];
-  // "info" alone does not constitute a meaningful risk
-  return maxRisk === "info" ? "low" : (maxRisk as OverallRisk);
+  return maxScore;
 }
+
+/**
+ * Maps a numeric risk score (0–3) to a human-readable overall risk label for UI display.
+ */
+export function getRiskLabel(score: number | null | undefined): {
+  label: string;
+  level: RiskLevel;
+} {
+  if (score == null || score <= 0) {
+    return { label: "Informational", level: "informational" };
+  }
+  if (score === 1) {
+    return { label: "Low Risk", level: "low" };
+  }
+  if (score === 2) {
+    return { label: "Medium Risk", level: "medium" };
+  }
+  return { label: "High Risk", level: "high" };
+}
+

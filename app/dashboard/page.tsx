@@ -1,11 +1,21 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ContractUpload } from "@/components/dashboard/ContractUpload";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { createClient } from "@/lib/supabase/server";
-import type { AnalysisWithDetails } from "@/types/analysis";
+import type {
+  AnalysisRow,
+  ClauseRow,
+  DetailedAnalysis,
+  FindingRow,
+  FindingWithClause,
+  KeyTermRow,
+  KeyTermWithClause,
+  ObligationRow,
+  ObligationWithClause,
+} from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -20,83 +30,104 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Fetch documents
+  // Fetch user documents
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
     .select("*")
     .order("created_at", { ascending: false });
 
-  // Fetch the most recent complete analysis for each document.
-  // We query all complete analyses for the user and build a map keyed by document_id.
-  // Using a single query is more efficient than one query per document.
-  let analysesMap: Record<string, AnalysisWithDetails> = {};
+  // Fetch analyses and related child records
+  const analysesMap: Record<string, DetailedAnalysis> = {};
 
   if (documents && documents.length > 0) {
     const documentIds = documents.map((d: Document) => d.id);
 
     const [
       { data: analyses },
+      { data: clauses },
       { data: findings },
       { data: keyTerms },
       { data: obligations },
-      { data: questions },
     ] = await Promise.all([
       supabase
         .from("analyses")
         .select("*")
         .in("document_id", documentIds)
         .eq("user_id", user.id)
-        .eq("status", "complete")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("clauses")
+        .select("*")
+        .in("document_id", documentIds)
+        .order("created_at", { ascending: true }),
       supabase
         .from("findings")
         .select("*")
         .in("document_id", documentIds)
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true }),
+        .order("created_at", { ascending: true }),
       supabase
         .from("key_terms")
         .select("*")
         .in("document_id", documentIds)
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true }),
+        .order("created_at", { ascending: true }),
       supabase
         .from("obligations")
         .select("*")
         .in("document_id", documentIds)
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true }),
-      supabase
-        .from("questions")
-        .select("*")
-        .in("document_id", documentIds)
-        .eq("user_id", user.id)
-        .order("sort_order", { ascending: true }),
+        .order("created_at", { ascending: true }),
     ]);
 
     if (analyses && analyses.length > 0) {
-      // Keep only the most recent complete analysis per document
-      // (analyses are ordered newest-first so the first per document_id wins)
+      const clauseMap = new Map<string, ClauseRow>();
+      ((clauses as ClauseRow[]) ?? []).forEach((c) => clauseMap.set(c.id, c));
+
       const seenDocIds = new Set<string>();
-      for (const analysis of analyses) {
+      for (const analysis of analyses as AnalysisRow[]) {
         if (seenDocIds.has(analysis.document_id)) continue;
         seenDocIds.add(analysis.document_id);
 
+        const docClauses = ((clauses as ClauseRow[]) ?? []).filter(
+          (c) => c.document_id === analysis.document_id,
+        );
+
+        const docFindings: FindingWithClause[] = (
+          (findings as FindingRow[]) ?? []
+        )
+          .filter((f) => f.document_id === analysis.document_id)
+          .map((f) => ({
+            ...f,
+            clause: f.clause_id ? clauseMap.get(f.clause_id) ?? null : null,
+          }));
+
+        const docKeyTerms: KeyTermWithClause[] = (
+          (keyTerms as KeyTermRow[]) ?? []
+        )
+          .filter((kt) => kt.document_id === analysis.document_id)
+          .map((kt) => ({
+            ...kt,
+            clause: kt.source_clause_id
+              ? clauseMap.get(kt.source_clause_id) ?? null
+              : null,
+          }));
+
+        const docObligations: ObligationWithClause[] = (
+          (obligations as ObligationRow[]) ?? []
+        )
+          .filter((o) => o.document_id === analysis.document_id)
+          .map((o) => ({
+            ...o,
+            clause: o.source_clause_id
+              ? clauseMap.get(o.source_clause_id) ?? null
+              : null,
+          }));
+
         analysesMap[analysis.document_id] = {
           ...analysis,
-          findings: (findings ?? []).filter(
-            (f) => f.analysis_id === analysis.id,
-          ),
-          key_terms: (keyTerms ?? []).filter(
-            (kt) => kt.analysis_id === analysis.id,
-          ),
-          obligations: (obligations ?? []).filter(
-            (o) => o.analysis_id === analysis.id,
-          ),
-          questions: (questions ?? []).filter(
-            (q) => q.analysis_id === analysis.id,
-          ),
-        } as AnalysisWithDetails;
+          clauses: docClauses,
+          findings: docFindings,
+          key_terms: docKeyTerms,
+          obligations: docObligations,
+        };
       }
     }
   }
