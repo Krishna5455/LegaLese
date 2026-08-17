@@ -1,7 +1,6 @@
-﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { SignOutButton } from "@/components/auth/SignOutButton";
+import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { ContractUpload } from "@/components/dashboard/ContractUpload";
 import { DocumentList } from "@/components/dashboard/DocumentList";
 import { createClient } from "@/lib/supabase/server";
@@ -141,24 +140,7 @@ export default async function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent/15 border border-accent/30 text-accent font-bold text-xs group-hover:bg-accent group-hover:text-white transition-colors">
-              §
-            </div>
-            <span className="text-base font-bold tracking-tight text-foreground">
-              LegaLese
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-mono text-muted hidden sm:inline-block">
-              {user.email}
-            </span>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
+      <DashboardNav userEmail={user.email} active="dashboard" />
 
       {/* Main Workspace */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 space-y-8">

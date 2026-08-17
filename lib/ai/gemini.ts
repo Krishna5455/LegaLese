@@ -2,23 +2,12 @@
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { getGeminiConfig } from "@/lib/ai/config";
 import { buildSystemInstruction, buildUserMessage } from "@/lib/ai/prompt";
+import { prepareContractText } from "@/lib/ai/prompt";
 import { AIAnalysisOutputSchema } from "@/lib/ai/schema";
 import type { AIAnalysisOutput } from "@/types/analysis";
 import type { ProcessedDocument } from "@/types/processing";
-import { prepareContractText } from "./prompt";
-
-function getGeminiConfig(): { apiKey: string; model: string } {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "GEMINI_API_KEY environment variable is not set. " +
-        "Add it to your .env.local file (server-only — never use NEXT_PUBLIC_).",
-    );
-  }
-  const model = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
-  return { apiKey, model };
-}
 
 export type GeminiAnalysisResult = {
   output: AIAnalysisOutput;

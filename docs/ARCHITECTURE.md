@@ -42,6 +42,8 @@ LegaLese is a **full-stack Next.js application** using the App Router. There is 
 | `/login` | Dynamic | Sign in |
 | `/signup` | Static | Sign up |
 | `/dashboard` | Dynamic | Upload, document list, inline analysis |
+| `/dashboard/create` | Dynamic | Create legal document (guided form, draft history) |
+| `/dashboard/create/[id]` | Dynamic | View generated agreement draft workspace & download |
 | `/dashboard/documents/[id]` | Dynamic | Full analysis workspace |
 | `/auth/callback` | Route handler | Supabase auth code exchange |
 
@@ -75,6 +77,7 @@ LegaLese does not expose a REST API for core features. The backend is **Next.js 
 | Auth | `lib/actions/auth.ts` | signUp, signIn, signOut |
 | Documents | `lib/actions/documents.ts` | uploadDocument, processDocument, deleteDocument |
 | Analyses | `lib/actions/analyses.ts` | analyzeDocument, getAnalysis |
+| Generated Docs | `lib/actions/generated-documents.ts` | generateFreelanceAgreement, getGeneratedDocument, downloadGeneratedDocument, listGeneratedDocuments |
 | Reports | `lib/actions/reports.ts` | generateReport, downloadReport, getReport |
 
 **Single route handler:** `app/auth/callback/route.ts` for OAuth/email confirmation.
@@ -121,9 +124,10 @@ auth.users
 | `findings` | Risk items with optional clause FK and questions JSONB |
 | `key_terms` | Defined terms linked to source clauses |
 | `obligations` | Duties/deadlines linked to source clauses |
+| `generated_documents` | AI-generated document drafts, structured sections, input data, model metadata |
 | `reports` | Pointer to generated Markdown report in storage |
 
-Schema reference (do not execute): `supabase/migrations/001_create_analyses_schema.sql`
+Schema references: `supabase/migrations/001_create_analyses_schema.sql`, `supabase/migrations/002_create_generated_documents.sql`
 
 ---
 
