@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/Button";
+import { DocumentExplanationView } from "@/components/create/DocumentExplanationView";
 import { exportGeneratedDocument } from "@/lib/actions/generated-documents";
+import { explainGeneratedDocumentAction } from "@/lib/actions/explanation";
+import type { DocumentExplanation } from "@/lib/ai/explanation-schema";
 import {
   generatedDocumentDownloadFilename,
   generatedDocumentToMarkdown,
@@ -16,6 +19,7 @@ type GeneratedDocumentWorkspaceProps = {
 };
 
 type ExportFormat = "pdf" | "docx" | "md";
+type ViewMode = "document" | "explanation";
 
 export function GeneratedDocumentWorkspace({
   document: doc,
@@ -24,7 +28,13 @@ export function GeneratedDocumentWorkspace({
   const [activeExportFormat, setActiveExportFormat] = useState<ExportFormat | null>(
     null,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  // Explanation state
+  const [viewMode, setViewMode] = useState<ViewMode>("document");
+  const [explanation, setExplanation] = useState<DocumentExplanation | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [explanationError, setExplanationError] = useState<string | null>(null);
 
   const content = doc.generated_content;
   const markdownText = generatedDocumentToMarkdown(content, doc.created_at);
@@ -36,20 +46,18 @@ export function GeneratedDocumentWorkspace({
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {
       console.error("Failed to copy to clipboard:", err);
-      setErrorMessage("Failed to copy document content to clipboard.");
+      setExportError("Failed to copy document content to clipboard.");
     }
   };
 
   const handleDownload = async (format: ExportFormat) => {
     setActiveExportFormat(format);
-    setErrorMessage(null);
+    setExportError(null);
 
     try {
-      // Primary export attempt via Server Action
       const result = await exportGeneratedDocument(doc.id, format);
 
       if (!result.success || !result.data || !result.filename) {
-        // Fallback attempt via API Route Handler
         const response = await fetch(
           `/api/documents/generated/${doc.id}/export?format=${format}`,
         );
@@ -76,7 +84,6 @@ export function GeneratedDocumentWorkspace({
         return;
       }
 
-      // Process successful Server Action binary payload
       let blob: Blob;
       if (result.isBase64) {
         const binaryString = atob(result.data);
@@ -103,7 +110,7 @@ export function GeneratedDocumentWorkspace({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error(`Export download failed (${format}):`, err);
-      setErrorMessage(
+      setExportError(
         err instanceof Error
           ? err.message
           : "An error occurred while downloading the document.",
@@ -111,6 +118,41 @@ export function GeneratedDocumentWorkspace({
     } finally {
       setActiveExportFormat(null);
     }
+  };
+
+  const handleUnderstandAgreement = async () => {
+    if (explanation) {
+      setViewMode("explanation");
+      return;
+    }
+
+    setIsExplaining(true);
+    setExplanationError(null);
+
+    try {
+      const res = await explainGeneratedDocumentAction(doc.id);
+      if (!res.success || !res.explanation) {
+        throw new Error(res.error || "Unable to generate explanation.");
+      }
+      setExplanation(res.explanation);
+      setViewMode("explanation");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to analyze document.";
+      console.error("[LegaLese/Workspace] Understand Agreement error:", msg);
+      setExplanationError(msg);
+    } finally {
+      setIsExplaining(false);
+    }
+  };
+
+  const handleJumpToSection = (secId: string) => {
+    setViewMode("document");
+    setTimeout(() => {
+      const el = document.getElementById(`section-${secId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 150);
   };
 
   const sortedSections = [...(content.sections ?? [])].sort(
@@ -150,8 +192,34 @@ export function GeneratedDocumentWorkspace({
             </p>
           </div>
 
-          {/* Export Action Buttons */}
+          {/* Action Buttons Header */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Understand Agreement Button */}
+            <Button
+              type="button"
+              onClick={handleUnderstandAgreement}
+              disabled={isExplaining}
+              className="text-xs bg-accent text-white hover:bg-accent/90 shadow-sm"
+            >
+              {isExplaining
+                ? "Analyzing Agreement..."
+                : viewMode === "explanation"
+                  ? "✓ Viewing Explanation"
+                  : "💡 Understand Agreement"}
+            </Button>
+
+            {/* Document Text Toggle if explanation active */}
+            {viewMode === "explanation" ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setViewMode("document")}
+                className="text-xs"
+              >
+                📄 View Full Text
+              </Button>
+            ) : null}
+
             <Button
               type="button"
               onClick={() => handleDownload("pdf")}
@@ -199,12 +267,24 @@ export function GeneratedDocumentWorkspace({
           </div>
         </div>
 
-        {/* Export Error Alert */}
-        {errorMessage ? (
+        {/* Error Alerts */}
+        {exportError ? (
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-center justify-between">
-            <span>⚠️ {errorMessage}</span>
+            <span>⚠️ {exportError}</span>
             <button
-              onClick={() => setErrorMessage(null)}
+              onClick={() => setExportError(null)}
+              className="text-xs font-semibold underline hover:no-underline ml-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
+
+        {explanationError ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-center justify-between">
+            <span>⚠️ {explanationError}</span>
+            <button
+              onClick={() => setExplanationError(null)}
               className="text-xs font-semibold underline hover:no-underline ml-2"
             >
               Dismiss
@@ -258,46 +338,55 @@ export function GeneratedDocumentWorkspace({
         </Link>
       </div>
 
-      {/* Structured Sections Document View */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between border-b border-border/60 pb-3">
-          <h2 className="text-base font-bold text-foreground">
-            Agreement Sections ({sortedSections.length})
-          </h2>
-          <span className="text-xs text-muted">
-            Section IDs preserved for future explanation & review
-          </span>
-        </div>
+      {/* View Switcher: Document Explanation View OR Structured Sections View */}
+      {viewMode === "explanation" && explanation ? (
+        <DocumentExplanationView
+          explanation={explanation}
+          documentTitle={content.title}
+          onReturnToDocument={() => setViewMode("document")}
+          onJumpToSection={handleJumpToSection}
+        />
+      ) : (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <h2 className="text-base font-bold text-foreground">
+              Agreement Sections ({sortedSections.length})
+            </h2>
+            <span className="text-xs text-muted">
+              Section IDs preserved for explanation & review
+            </span>
+          </div>
 
-        {sortedSections.map((sec) => (
-          <article
-            key={sec.id}
-            id={`section-${sec.id}`}
-            className="rounded-xl border border-border bg-surface p-6 space-y-3 transition-colors hover:border-accent/30"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-foreground">
-                {sec.order + 1}. {sec.title}
-              </h3>
-              <span className="rounded bg-accent/10 border border-accent/20 px-2 py-0.5 text-[10px] font-mono text-accent">
-                id: {sec.id}
-              </span>
+          {sortedSections.map((sec) => (
+            <article
+              key={sec.id}
+              id={`section-${sec.id}`}
+              className="rounded-xl border border-border bg-surface p-6 space-y-3 transition-colors hover:border-accent/30"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-foreground">
+                  {sec.order + 1}. {sec.title}
+                </h3>
+                <span className="rounded bg-accent/10 border border-accent/20 px-2 py-0.5 text-[10px] font-mono text-accent">
+                  id: {sec.id}
+                </span>
+              </div>
+
+              <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
+                {sec.content}
+              </div>
+            </article>
+          ))}
+
+          {/* Legal Disclaimer Card */}
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-xs text-amber-800 dark:text-amber-300 space-y-2">
+            <div className="flex items-center gap-2 font-bold">
+              <span>⚠️ Important Legal Notice</span>
             </div>
-
-            <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/90 whitespace-pre-line leading-relaxed">
-              {sec.content}
-            </div>
-          </article>
-        ))}
-      </div>
-
-      {/* Legal Disclaimer Card */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-xs text-amber-800 dark:text-amber-300 space-y-2">
-        <div className="flex items-center gap-2 font-bold">
-          <span>⚠️ Important Legal Notice</span>
+            <p className="leading-normal">{content.disclaimer}</p>
+          </div>
         </div>
-        <p className="leading-normal">{content.disclaimer}</p>
-      </div>
+      )}
     </div>
   );
 }
