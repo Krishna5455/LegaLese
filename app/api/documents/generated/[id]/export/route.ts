@@ -14,21 +14,30 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let format = "pdf";
+  let documentId = "";
+
   try {
-    const { id: documentId } = await params;
+    const resolvedParams = await params;
+    documentId = resolvedParams?.id ?? "";
+    format = (
+      request.nextUrl.searchParams.get("format") || "pdf"
+    ).toLowerCase();
+
+    console.log(
+      `[LegaLese/ExportAPI] Incoming export request | docId: ${documentId} | format: ${format}`,
+    );
 
     if (!documentId) {
+      console.warn("[LegaLese/ExportAPI] Missing document ID");
       return NextResponse.json(
         { error: "Document ID is required." },
         { status: 400 },
       );
     }
 
-    const format = (
-      request.nextUrl.searchParams.get("format") || "pdf"
-    ).toLowerCase();
-
     if (!["pdf", "docx", "md"].includes(format)) {
+      console.warn(`[LegaLese/ExportAPI] Invalid format requested: ${format}`);
       return NextResponse.json(
         { error: "Invalid export format requested. Supported formats: pdf, docx, md." },
         { status: 400 },
@@ -41,7 +50,14 @@ export async function GET(
       error: authError,
     } = await supabase.auth.getUser();
 
+    console.log(
+      `[LegaLese/ExportAPI] Auth check | userPresent: ${Boolean(user)} | authError: ${
+        authError?.message ?? "none"
+      }`,
+    );
+
     if (authError || !user) {
+      console.warn("[LegaLese/ExportAPI] Unauthorized export attempt");
       return NextResponse.json(
         { error: "Unauthorized. Please sign in to export documents." },
         { status: 401 },
@@ -56,6 +72,11 @@ export async function GET(
       .single();
 
     if (dbError || !documentRow) {
+      console.warn(
+        `[LegaLese/ExportAPI] Document lookup failed | dbError: ${
+          dbError?.message ?? "Not found"
+        }`,
+      );
       return NextResponse.json(
         { error: "Document not found or access denied." },
         { status: 404 },
@@ -65,11 +86,25 @@ export async function GET(
     const content = documentRow.generated_content as GeneratedDocumentContent;
     const createdAt = documentRow.created_at;
 
+    if (!content || !content.title || !Array.isArray(content.sections)) {
+      console.error("[LegaLese/ExportAPI] Invalid document payload structure");
+      return NextResponse.json(
+        { error: "Invalid generated document structure." },
+        { status: 422 },
+      );
+    }
+
     if (format === "pdf") {
+      console.log("[LegaLese/ExportAPI] Starting PDF generation...");
       const pdfBuffer = await exportPdf(content, createdAt);
       const filename = generatedDocumentDownloadFilename(content.title, "pdf");
+      const uint8Array = new Uint8Array(pdfBuffer);
 
-      return new Response(pdfBuffer as unknown as BodyInit, {
+      console.log(
+        `[LegaLese/ExportAPI] PDF generation success | bufferSize: ${uint8Array.byteLength} bytes | status: 200`,
+      );
+
+      return new Response(uint8Array, {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
@@ -80,10 +115,16 @@ export async function GET(
     }
 
     if (format === "docx") {
+      console.log("[LegaLese/ExportAPI] Starting DOCX generation...");
       const docxBuffer = await exportDocx(content, createdAt);
       const filename = generatedDocumentDownloadFilename(content.title, "docx");
+      const uint8Array = new Uint8Array(docxBuffer);
 
-      return new Response(docxBuffer as unknown as BodyInit, {
+      console.log(
+        `[LegaLese/ExportAPI] DOCX generation success | bufferSize: ${uint8Array.byteLength} bytes | status: 200`,
+      );
+
+      return new Response(uint8Array, {
         status: 200,
         headers: {
           "Content-Type":
@@ -95,8 +136,13 @@ export async function GET(
     }
 
     // Markdown format
+    console.log("[LegaLese/ExportAPI] Starting Markdown export...");
     const markdown = generatedDocumentToMarkdown(content, createdAt);
     const filename = generatedDocumentDownloadFilename(content.title, "md");
+
+    console.log(
+      `[LegaLese/ExportAPI] Markdown export success | length: ${markdown.length} chars | status: 200`,
+    );
 
     return new Response(markdown, {
       status: 200,
@@ -107,9 +153,13 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("[LegaLese/ExportAPI] Export failed:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Unknown server error";
+    console.error(
+      `[LegaLese/ExportAPI] Export exception caught | docId: ${documentId} | format: ${format} | error: ${errorMessage}`,
+    );
     return NextResponse.json(
-      { error: "An unexpected error occurred while generating export." },
+      { error: `Export failed: ${errorMessage}` },
       { status: 500 },
     );
   }

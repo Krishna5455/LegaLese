@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/Button";
+import { exportGeneratedDocument } from "@/lib/actions/generated-documents";
 import {
   generatedDocumentDownloadFilename,
   generatedDocumentToMarkdown,
@@ -44,24 +45,58 @@ export function GeneratedDocumentWorkspace({
     setErrorMessage(null);
 
     try {
-      const response = await fetch(
-        `/api/documents/generated/${doc.id}/export?format=${format}`,
-      );
+      // Primary export attempt via Server Action
+      const result = await exportGeneratedDocument(doc.id, format);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error ||
-            `Failed to download ${format.toUpperCase()} document export.`,
+      if (!result.success || !result.data || !result.filename) {
+        // Fallback attempt via API Route Handler
+        const response = await fetch(
+          `/api/documents/generated/${doc.id}/export?format=${format}`,
         );
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error ||
+              result.error ||
+              `Failed to download ${format.toUpperCase()} document export.`,
+          );
+        }
+
+        const blob = await response.blob();
+        const filename = generatedDocumentDownloadFilename(content.title, format);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
       }
 
-      const blob = await response.blob();
-      const filename = generatedDocumentDownloadFilename(content.title, format);
+      // Process successful Server Action binary payload
+      let blob: Blob;
+      if (result.isBase64) {
+        const binaryString = atob(result.data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([bytes], {
+          type: result.mimeType || "application/octet-stream",
+        });
+      } else {
+        blob = new Blob([result.data], {
+          type: result.mimeType || "text/markdown;charset=utf-8",
+        });
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = filename;
+      a.download = result.filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

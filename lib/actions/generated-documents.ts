@@ -7,6 +7,8 @@ import {
   generatedDocumentDownloadFilename,
   generatedDocumentToMarkdown,
 } from "@/lib/generation/export";
+import { exportPdf } from "@/lib/generation/export-pdf";
+import { exportDocx } from "@/lib/generation/export-docx";
 import { parseFreelanceAgreementInput } from "@/lib/generation/freelance-agreement-schema";
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -30,6 +32,17 @@ export type DownloadGeneratedDocumentResult = {
   error?: string;
   content?: string;
   filename?: string;
+};
+
+export type ExportDocumentFormat = "pdf" | "docx" | "md";
+
+export type ExportDocumentResult = {
+  success?: boolean;
+  error?: string;
+  data?: string;
+  filename?: string;
+  mimeType?: string;
+  isBase64?: boolean;
 };
 
 export async function generateFreelanceAgreement(
@@ -141,8 +154,93 @@ export async function downloadGeneratedDocument(
   return {
     success: true,
     content: markdown,
-    filename: generatedDocumentDownloadFilename(content.title),
+    filename: generatedDocumentDownloadFilename(content.title, "md"),
   };
+}
+
+export async function exportGeneratedDocument(
+  documentId: string,
+  format: ExportDocumentFormat = "pdf",
+): Promise<ExportDocumentResult> {
+  console.log(
+    `[LegaLese/ExportAction] Export requested | docId: ${documentId} | format: ${format}`,
+  );
+
+  const { document, error } = await getGeneratedDocument(documentId);
+
+  if (error || !document) {
+    console.warn(
+      `[LegaLese/ExportAction] Document lookup failed | docId: ${documentId} | error: ${error}`,
+    );
+    return { error: error ?? "Document not found or access denied." };
+  }
+
+  const content = document.generated_content as GeneratedDocumentContent;
+  const createdAt = document.created_at;
+
+  if (!content || !content.title || !Array.isArray(content.sections)) {
+    console.error("[LegaLese/ExportAction] Invalid document payload structure");
+    return { error: "Invalid generated document payload structure." };
+  }
+
+  try {
+    if (format === "pdf") {
+      console.log("[LegaLese/ExportAction] Generating PDF buffer...");
+      const pdfBuffer = await exportPdf(content, createdAt);
+      const filename = generatedDocumentDownloadFilename(content.title, "pdf");
+
+      console.log(
+        `[LegaLese/ExportAction] PDF export success | size: ${pdfBuffer.length} bytes`,
+      );
+
+      return {
+        success: true,
+        data: pdfBuffer.toString("base64"),
+        filename,
+        mimeType: "application/pdf",
+        isBase64: true,
+      };
+    }
+
+    if (format === "docx") {
+      console.log("[LegaLese/ExportAction] Generating DOCX buffer...");
+      const docxBuffer = await exportDocx(content, createdAt);
+      const filename = generatedDocumentDownloadFilename(content.title, "docx");
+
+      console.log(
+        `[LegaLese/ExportAction] DOCX export success | size: ${docxBuffer.length} bytes`,
+      );
+
+      return {
+        success: true,
+        data: docxBuffer.toString("base64"),
+        filename,
+        mimeType:
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        isBase64: true,
+      };
+    }
+
+    // Markdown format
+    console.log("[LegaLese/ExportAction] Generating Markdown export...");
+    const markdown = generatedDocumentToMarkdown(content, createdAt);
+    const filename = generatedDocumentDownloadFilename(content.title, "md");
+
+    return {
+      success: true,
+      data: markdown,
+      filename,
+      mimeType: "text/markdown; charset=utf-8",
+      isBase64: false,
+    };
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected export error occurred.";
+    console.error(
+      `[LegaLese/ExportAction] Export exception | format: ${format} | error: ${errorMessage}`,
+    );
+    return { error: `Failed to generate ${format.toUpperCase()} export: ${errorMessage}` };
+  }
 }
 
 export async function listGeneratedDocuments(): Promise<{
