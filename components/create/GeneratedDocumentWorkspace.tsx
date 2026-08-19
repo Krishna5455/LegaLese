@@ -5,9 +5,12 @@ import { useState } from "react";
 
 import { Button } from "@/components/Button";
 import { DocumentExplanationView } from "@/components/create/DocumentExplanationView";
+import { DocumentReviewView } from "@/components/create/DocumentReviewView";
 import { exportGeneratedDocument } from "@/lib/actions/generated-documents";
 import { explainGeneratedDocumentAction } from "@/lib/actions/explanation";
+import { reviewGeneratedDocumentAction } from "@/lib/actions/review";
 import type { DocumentExplanation } from "@/lib/ai/explanation-schema";
+import type { DocumentReview } from "@/lib/ai/review-schema";
 import {
   generatedDocumentDownloadFilename,
   generatedDocumentToMarkdown,
@@ -19,7 +22,7 @@ type GeneratedDocumentWorkspaceProps = {
 };
 
 type ExportFormat = "pdf" | "docx" | "md";
-type ViewMode = "document" | "explanation";
+type ViewMode = "document" | "explanation" | "review";
 
 export function GeneratedDocumentWorkspace({
   document: doc,
@@ -30,11 +33,18 @@ export function GeneratedDocumentWorkspace({
   );
   const [exportError, setExportError] = useState<string | null>(null);
 
-  // Explanation state
+  // Workspace View State
   const [viewMode, setViewMode] = useState<ViewMode>("document");
+
+  // Explanation state
   const [explanation, setExplanation] = useState<DocumentExplanation | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
   const [explanationError, setExplanationError] = useState<string | null>(null);
+
+  // Review state
+  const [review, setReview] = useState<DocumentReview | null>(null);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   const content = doc.generated_content;
   const markdownText = generatedDocumentToMarkdown(content, doc.created_at);
@@ -55,9 +65,11 @@ export function GeneratedDocumentWorkspace({
     setExportError(null);
 
     try {
-      const result = await exportGeneratedDocument(doc.id, format);
+      // Primary export attempt passing doc.id and structured content
+      const result = await exportGeneratedDocument(doc.id, format, content);
 
       if (!result.success || !result.data || !result.filename) {
+        // Fallback attempt via Route Handler if server action returns error
         const response = await fetch(
           `/api/documents/generated/${doc.id}/export?format=${format}`,
         );
@@ -72,7 +84,7 @@ export function GeneratedDocumentWorkspace({
         }
 
         const blob = await response.blob();
-        const filename = generatedDocumentDownloadFilename(content.title, format);
+        const filename = generatedDocumentDownloadFilename(content.title, format, doc.id);
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -145,6 +157,31 @@ export function GeneratedDocumentWorkspace({
     }
   };
 
+  const handleReviewAgreement = async () => {
+    if (review) {
+      setViewMode("review");
+      return;
+    }
+
+    setIsReviewing(true);
+    setReviewError(null);
+
+    try {
+      const res = await reviewGeneratedDocumentAction(doc.id);
+      if (!res.success || !res.review) {
+        throw new Error(res.error || "Unable to generate contract review.");
+      }
+      setReview(res.review);
+      setViewMode("review");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to review document.";
+      console.error("[LegaLese/Workspace] Review Agreement error:", msg);
+      setReviewError(msg);
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
   const handleJumpToSection = (secId: string) => {
     setViewMode("document");
     setTimeout(() => {
@@ -192,39 +229,14 @@ export function GeneratedDocumentWorkspace({
             </p>
           </div>
 
-          {/* Action Buttons Header */}
+          {/* Export Action Buttons (PDF is Primary) */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Understand Agreement Button */}
             <Button
               type="button"
-              onClick={handleUnderstandAgreement}
-              disabled={isExplaining}
-              className="text-xs bg-accent text-white hover:bg-accent/90 shadow-sm"
-            >
-              {isExplaining
-                ? "Analyzing Agreement..."
-                : viewMode === "explanation"
-                  ? "✓ Viewing Explanation"
-                  : "💡 Understand Agreement"}
-            </Button>
-
-            {/* Document Text Toggle if explanation active */}
-            {viewMode === "explanation" ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setViewMode("document")}
-                className="text-xs"
-              >
-                📄 View Full Text
-              </Button>
-            ) : null}
-
-            <Button
-              type="button"
+              variant="primary"
               onClick={() => handleDownload("pdf")}
               disabled={!!activeExportFormat}
-              className="text-xs"
+              className="text-xs shadow-sm font-semibold"
             >
               {activeExportFormat === "pdf"
                 ? "Preparing PDF..."
@@ -236,7 +248,7 @@ export function GeneratedDocumentWorkspace({
               variant="outline"
               onClick={() => handleDownload("docx")}
               disabled={!!activeExportFormat}
-              className="text-xs"
+              className="text-xs font-medium"
             >
               {activeExportFormat === "docx"
                 ? "Preparing DOCX..."
@@ -246,25 +258,57 @@ export function GeneratedDocumentWorkspace({
             <Button
               type="button"
               variant="outline"
-              onClick={handleCopy}
-              disabled={!!activeExportFormat}
-              className="text-xs"
-            >
-              {copied ? "✓ Copied" : "Copy"}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
               onClick={() => handleDownload("md")}
               disabled={!!activeExportFormat}
-              className="text-xs"
+              className="text-xs font-medium"
             >
               {activeExportFormat === "md"
                 ? "Preparing MD..."
                 : "Download Markdown (.md)"}
             </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopy}
+              disabled={!!activeExportFormat}
+              className="text-xs font-medium"
+            >
+              {copied ? "✓ Copied" : "Copy"}
+            </Button>
           </div>
+        </div>
+
+        {/* Primary View Switcher Navigation Bar */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
+          <Button
+            type="button"
+            variant={viewMode === "document" ? "primary" : "outline"}
+            onClick={() => setViewMode("document")}
+            className="text-xs"
+          >
+            📄 View Agreement
+          </Button>
+
+          <Button
+            type="button"
+            variant={viewMode === "explanation" ? "primary" : "outline"}
+            onClick={handleUnderstandAgreement}
+            disabled={isExplaining}
+            className="text-xs"
+          >
+            {isExplaining ? "Analyzing..." : "💡 Understand Agreement"}
+          </Button>
+
+          <Button
+            type="button"
+            variant={viewMode === "review" ? "primary" : "outline"}
+            onClick={handleReviewAgreement}
+            disabled={isReviewing}
+            className="text-xs"
+          >
+            {isReviewing ? "Reviewing..." : "🔍 Review Agreement"}
+          </Button>
         </div>
 
         {/* Error Alerts */}
@@ -285,6 +329,18 @@ export function GeneratedDocumentWorkspace({
             <span>⚠️ {explanationError}</span>
             <button
               onClick={() => setExplanationError(null)}
+              className="text-xs font-semibold underline hover:no-underline ml-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
+
+        {reviewError ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-center justify-between">
+            <span>⚠️ {reviewError}</span>
+            <button
+              onClick={() => setReviewError(null)}
               className="text-xs font-semibold underline hover:no-underline ml-2"
             >
               Dismiss
@@ -338,8 +394,15 @@ export function GeneratedDocumentWorkspace({
         </Link>
       </div>
 
-      {/* View Switcher: Document Explanation View OR Structured Sections View */}
-      {viewMode === "explanation" && explanation ? (
+      {/* Workspace View Mode Switcher */}
+      {viewMode === "review" && review ? (
+        <DocumentReviewView
+          review={review}
+          documentTitle={content.title}
+          onReturnToDocument={() => setViewMode("document")}
+          onJumpToSection={handleJumpToSection}
+        />
+      ) : viewMode === "explanation" && explanation ? (
         <DocumentExplanationView
           explanation={explanation}
           documentTitle={content.title}

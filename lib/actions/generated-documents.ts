@@ -154,29 +154,48 @@ export async function downloadGeneratedDocument(
   return {
     success: true,
     content: markdown,
-    filename: generatedDocumentDownloadFilename(content.title, "md"),
+    filename: generatedDocumentDownloadFilename(content.title, "md", documentId),
   };
 }
 
 export async function exportGeneratedDocument(
   documentId: string,
   format: ExportDocumentFormat = "pdf",
+  optionalContent?: GeneratedDocumentContent,
 ): Promise<ExportDocumentResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  const userPresent = Boolean(user && !authError);
+
   console.log(
-    `[LegaLese/ExportAction] Export requested | docId: ${documentId} | format: ${format}`,
+    `[LegaLese/ExportAction] Export requested | docId: ${documentId} | format: ${format} | userPresent: ${userPresent}`,
   );
 
-  const { document, error } = await getGeneratedDocument(documentId);
-
-  if (error || !document) {
+  if (!userPresent) {
     console.warn(
-      `[LegaLese/ExportAction] Document lookup failed | docId: ${documentId} | error: ${error}`,
+      `[LegaLese/ExportAction] Unauthorized export attempt | docId: ${documentId}`,
     );
-    return { error: error ?? "Document not found or access denied." };
+    return { error: "You must be signed in to export documents." };
   }
 
-  const content = document.generated_content as GeneratedDocumentContent;
-  const createdAt = document.created_at;
+  let content: GeneratedDocumentContent | null = optionalContent ?? null;
+  let createdAt: string | undefined = undefined;
+
+  if (!content) {
+    const { document, error: docError } = await getGeneratedDocument(documentId);
+    if (docError || !document) {
+      console.warn(
+        `[LegaLese/ExportAction] Document lookup failed | docId: ${documentId} | error: ${docError}`,
+      );
+      return { error: docError ?? "Document not found or access denied." };
+    }
+    content = document.generated_content as GeneratedDocumentContent;
+    createdAt = document.created_at;
+  }
 
   if (!content || !content.title || !Array.isArray(content.sections)) {
     console.error("[LegaLese/ExportAction] Invalid document payload structure");
@@ -187,10 +206,10 @@ export async function exportGeneratedDocument(
     if (format === "pdf") {
       console.log("[LegaLese/ExportAction] Generating PDF buffer...");
       const pdfBuffer = await exportPdf(content, createdAt);
-      const filename = generatedDocumentDownloadFilename(content.title, "pdf");
+      const filename = generatedDocumentDownloadFilename(content.title, "pdf", documentId);
 
       console.log(
-        `[LegaLese/ExportAction] PDF export success | size: ${pdfBuffer.length} bytes`,
+        `[LegaLese/ExportAction] PDF export success | size: ${pdfBuffer.length} bytes | filename: ${filename}`,
       );
 
       return {
@@ -205,10 +224,10 @@ export async function exportGeneratedDocument(
     if (format === "docx") {
       console.log("[LegaLese/ExportAction] Generating DOCX buffer...");
       const docxBuffer = await exportDocx(content, createdAt);
-      const filename = generatedDocumentDownloadFilename(content.title, "docx");
+      const filename = generatedDocumentDownloadFilename(content.title, "docx", documentId);
 
       console.log(
-        `[LegaLese/ExportAction] DOCX export success | size: ${docxBuffer.length} bytes`,
+        `[LegaLese/ExportAction] DOCX export success | size: ${docxBuffer.length} bytes | filename: ${filename}`,
       );
 
       return {
@@ -224,7 +243,7 @@ export async function exportGeneratedDocument(
     // Markdown format
     console.log("[LegaLese/ExportAction] Generating Markdown export...");
     const markdown = generatedDocumentToMarkdown(content, createdAt);
-    const filename = generatedDocumentDownloadFilename(content.title, "md");
+    const filename = generatedDocumentDownloadFilename(content.title, "md", documentId);
 
     return {
       success: true,

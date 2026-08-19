@@ -49,11 +49,14 @@ export function generatedDocumentToMarkdown(
 export function generatedDocumentDownloadFilename(
   title: string,
   format: "pdf" | "docx" | "md" = "md",
+  documentId?: string,
 ): string {
-  const safe = title
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_+/g, "_")
-    .slice(0, 80);
-  const base = safe || "Freelance_Service_Agreement";
-  return `${base}.${format}`;
+  const safeTitle = (title || "Freelance Service Agreement")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+
+  const baseName = safeTitle || "Freelance-Service-Agreement";
+  const shortId = documentId ? `-${documentId.slice(0, 8)}` : "";
+  return `${baseName}${shortId}.${format}`;
 }

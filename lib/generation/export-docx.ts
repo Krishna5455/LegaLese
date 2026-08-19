@@ -22,103 +22,176 @@ export async function exportDocx(
 ): Promise<Buffer> {
   const children: (Paragraph | Table)[] = [];
 
-  // Title
+  const sanitizeText = (text: string): string => {
+    return text
+      .replace(/^#+\s*/gm, "")
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/^-\s*/gm, "• ")
+      .trim();
+  };
+
+  // --- DOCUMENT TITLE ---
   children.push(
     new Paragraph({
-      text: content.title.toUpperCase(),
-      heading: HeadingLevel.HEADING_1,
+      text: (content.title || "FREELANCE SERVICE AGREEMENT").toUpperCase(),
+      heading: HeadingLevel.TITLE,
       alignment: AlignmentType.CENTER,
-      spacing: { after: 120 },
+      spacing: { after: 240 },
     }),
   );
 
-  // Subtitle / Metadata
-  const metadataText = createdAt
-    ? `FREELANCE SERVICE AGREEMENT  •  Generated on ${new Intl.DateTimeFormat(
-        "en-US",
-        { dateStyle: "full" },
-      ).format(new Date(createdAt))}`
-    : "FREELANCE SERVICE AGREEMENT";
-
+  // --- PREAMBLE ---
   children.push(
     new Paragraph({
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 360 },
+      alignment: AlignmentType.LEFT,
+      spacing: { after: 180 },
       children: [
         new TextRun({
-          text: metadataText,
-          size: 18, // 9pt
-          color: "6B7280",
-          font: "Arial",
+          text: 'This Freelance Service Agreement ("Agreement") is entered into by and between the following parties:',
+          size: 20, // 10pt
+          font: "Times New Roman",
+          color: "111111",
         }),
       ],
     }),
   );
 
-  // Parties Heading
-  children.push(
-    new Paragraph({
-      text: "PARTIES TO THE AGREEMENT",
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 240, after: 120 },
-    }),
-  );
+  // --- PARTIES TABLE (2 COLUMNS) ---
+  const effectiveDateStr = createdAt
+    ? new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(
+        new Date(createdAt),
+      )
+    : new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(new Date());
 
-  // Parties Detail
-  children.push(
-    new Paragraph({
-      spacing: { after: 60 },
-      children: [
-        new TextRun({ text: "Freelancer (Service Provider): ", bold: true, size: 20, font: "Arial" }),
-        new TextRun({ text: content.parties.freelancerName, size: 20, font: "Arial" }),
-      ],
-    }),
-    new Paragraph({
-      spacing: { after: 60 },
-      children: [
-        new TextRun({ text: "Client: ", bold: true, size: 20, font: "Arial" }),
-        new TextRun({ text: content.parties.clientName, size: 20, font: "Arial" }),
-      ],
-    }),
-  );
-
-  if (content.parties.clientAddress) {
-    children.push(
-      new Paragraph({
-        spacing: { after: 60 },
+  const partiesTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
         children: [
-          new TextRun({ text: "Client Address: ", bold: true, size: 20, font: "Arial" }),
-          new TextRun({ text: content.parties.clientAddress, size: 20, font: "Arial" }),
+          // Client Column
+          new TableCell({
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            children: [
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "CLIENT",
+                    bold: true,
+                    size: 20,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({
+                    text: `Name: ${content.parties.clientName}`,
+                    size: 19,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              ...(content.parties.clientAddress
+                ? [
+                    new Paragraph({
+                      spacing: { after: 40 },
+                      children: [
+                        new TextRun({
+                          text: `Address: ${content.parties.clientAddress}`,
+                          size: 19,
+                          font: "Times New Roman",
+                        }),
+                      ],
+                    }),
+                  ]
+                : []),
+            ],
+          }),
+          // Freelancer Column
+          new TableCell({
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            children: [
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "FREELANCER",
+                    bold: true,
+                    size: 20,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 40 },
+                children: [
+                  new TextRun({
+                    text: `Name: ${content.parties.freelancerName}`,
+                    size: 19,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+            ],
+          }),
         ],
       }),
-    );
-  }
+    ],
+  });
+
+  children.push(partiesTable);
 
   children.push(
     new Paragraph({
-      spacing: { after: 240 },
+      spacing: { before: 180, after: 240 },
+      children: [
+        new TextRun({
+          text: `Effective Date: ${effectiveDateStr}`,
+          italics: true,
+          size: 19,
+          font: "Times New Roman",
+          color: "333333",
+        }),
+      ],
     }),
   );
 
-  // Agreement Sections
+  // --- NUMBERED SECTIONS ---
   const sortedSections = [...(content.sections ?? [])].sort(
     (a, b) => a.order - b.order,
   );
 
   for (let index = 0; index < sortedSections.length; index++) {
     const section = sortedSections[index];
+    const cleanTitle = sanitizeText(section.title).toUpperCase();
+    const cleanContent = sanitizeText(section.content);
 
-    // Section Title
+    // Section Heading
     children.push(
       new Paragraph({
-        text: `${index + 1}. ${section.title.toUpperCase()}`,
-        heading: HeadingLevel.HEADING_2,
+        text: `${index + 1}. ${cleanTitle}`,
+        heading: HeadingLevel.HEADING_1,
         spacing: { before: 240, after: 120 },
       }),
     );
 
-    // Section Paragraphs
-    const paragraphs = section.content.split(/\n+/);
+    // Section Content Paragraphs
+    const paragraphs = cleanContent.split(/\n+/);
     for (const paragraphText of paragraphs) {
       if (paragraphText.trim().length > 0) {
         children.push(
@@ -129,8 +202,8 @@ export async function exportDocx(
               new TextRun({
                 text: paragraphText.trim(),
                 size: 20, // 10pt
-                font: "Arial",
-                color: "1F2937",
+                font: "Times New Roman",
+                color: "111111",
               }),
             ],
           }),
@@ -139,10 +212,143 @@ export async function exportDocx(
     }
   }
 
-  // Legal Disclaimer Box (Rendered as styled single-cell table)
+  // --- SIGNATURES SECTION ---
+  children.push(
+    new Paragraph({
+      spacing: { before: 360, after: 240 },
+      children: [
+        new TextRun({
+          text: "IN WITNESS WHEREOF, the parties hereto have executed this Agreement as of the Effective Date.",
+          bold: true,
+          size: 20,
+          font: "Times New Roman",
+        }),
+      ],
+    }),
+  );
+
+  const signatureTable = new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: [
+          // CLIENT Signature Cell
+          new TableCell({
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            children: [
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [
+                  new TextRun({
+                    text: "CLIENT:",
+                    bold: true,
+                    size: 19,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: `Name: ${content.parties.clientName}`,
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "Signature: __________________________",
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "Date: _____________________________",
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+            ],
+          }),
+          // FREELANCER Signature Cell
+          new TableCell({
+            width: { size: 50, type: WidthType.PERCENTAGE },
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+              right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            },
+            children: [
+              new Paragraph({
+                spacing: { after: 80 },
+                children: [
+                  new TextRun({
+                    text: "FREELANCER:",
+                    bold: true,
+                    size: 19,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: `Name: ${content.parties.freelancerName}`,
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "Signature: __________________________",
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { after: 60 },
+                children: [
+                  new TextRun({
+                    text: "Date: _____________________________",
+                    size: 18,
+                    font: "Times New Roman",
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  children.push(signatureTable);
+
+  // --- DISCLAIMER BOX ---
   const disclaimerText =
     content.disclaimer ||
-    "AI-generated draft. This document is provided for informational purposes and is not a substitute for professional legal advice.";
+    "This document is an AI-generated draft provided for informational purposes and is not a substitute for professional legal advice.";
 
   const disclaimerTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -152,34 +358,36 @@ export async function exportDocx(
           new TableCell({
             width: { size: 100, type: WidthType.PERCENTAGE },
             shading: { fill: "F9FAFB" },
-            margins: { top: 180, bottom: 180, left: 240, right: 240 },
+            margins: { top: 120, bottom: 120, left: 180, right: 180 },
             borders: {
-              top: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" },
-              bottom: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" },
-              left: { style: BorderStyle.SINGLE, size: 12, color: "B45309" }, // Accent border left
-              right: { style: BorderStyle.SINGLE, size: 4, color: "D1D5DB" },
+              top: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+              bottom: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+              left: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+              right: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
             },
             children: [
               new Paragraph({
-                spacing: { after: 60 },
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 40 },
                 children: [
                   new TextRun({
-                    text: "LEGAL DISCLAIMER",
+                    text: "AI-GENERATED DOCUMENT DISCLAIMER",
                     bold: true,
-                    size: 17, // 8.5pt
-                    color: "B45309",
-                    font: "Arial",
+                    size: 16,
+                    color: "555555",
+                    font: "Times New Roman",
                   }),
                 ],
               }),
               new Paragraph({
+                alignment: AlignmentType.CENTER,
                 children: [
                   new TextRun({
                     text: disclaimerText,
                     italics: true,
-                    size: 16, // 8pt
-                    color: "4B5563",
-                    font: "Arial",
+                    size: 15,
+                    color: "666666",
+                    font: "Times New Roman",
                   }),
                 ],
               }),
@@ -215,10 +423,10 @@ export async function exportDocx(
                 alignment: AlignmentType.RIGHT,
                 children: [
                   new TextRun({
-                    text: "LegaLese | Legal Document Draft",
-                    size: 16,
-                    color: "9CA3AF",
-                    font: "Arial",
+                    text: "FREELANCE SERVICE AGREEMENT",
+                    size: 15,
+                    color: "777777",
+                    font: "Times New Roman",
                   }),
                 ],
               }),
@@ -234,26 +442,26 @@ export async function exportDocx(
                   new TextRun({
                     text: "Page ",
                     size: 16,
-                    color: "6B7280",
-                    font: "Arial",
+                    color: "555555",
+                    font: "Times New Roman",
                   }),
                   new TextRun({
                     children: [PageNumber.CURRENT],
                     size: 16,
-                    color: "6B7280",
-                    font: "Arial",
+                    color: "555555",
+                    font: "Times New Roman",
                   }),
                   new TextRun({
                     text: " of ",
                     size: 16,
-                    color: "6B7280",
-                    font: "Arial",
+                    color: "555555",
+                    font: "Times New Roman",
                   }),
                   new TextRun({
                     children: [PageNumber.TOTAL_PAGES],
                     size: 16,
-                    color: "6B7280",
-                    font: "Arial",
+                    color: "555555",
+                    font: "Times New Roman",
                   }),
                 ],
               }),
