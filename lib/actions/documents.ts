@@ -246,7 +246,7 @@ async function processDocumentInternal(
     const { error: artifactUploadErr } = await supabase.storage
       .from("contracts")
       .upload(artifactPath, artifactBuffer, {
-        contentType: "application/json",
+        contentType: "text/plain",
         upsert: true,
       });
 

@@ -28,10 +28,10 @@ export default async function CreateDocumentPage() {
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8 space-y-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Create Legal Document
+            Create Document
           </h1>
           <p className="mt-1 text-xs text-muted">
-            Answer a few guided questions to generate a custom, structured legal contract.
+            Answer a few simple questions to create your customized legal agreement.
           </p>
         </div>
 
@@ -43,14 +43,14 @@ export default async function CreateDocumentPage() {
 
           {/* Sidebar / Recent Drafts Section */}
           <div className="space-y-6">
-            <div className="rounded-xl border border-border bg-surface p-6 space-y-4">
+            <div className="rounded-xl border border-border bg-surface p-6 space-y-4 shadow-sm">
               <h2 className="text-sm font-semibold text-foreground">
-                Your Generated Drafts ({documents?.length ?? 0})
+                Your Documents ({documents?.length ?? 0})
               </h2>
 
               {!documents || documents.length === 0 ? (
                 <p className="text-xs text-muted">
-                  No generated drafts yet. Fill out the form to create your first agreement.
+                  No agreements created yet. Complete the wizard to create your first document.
                 </p>
               ) : (
                 <ul className="space-y-3">
@@ -69,7 +69,7 @@ export default async function CreateDocumentPage() {
                               dateStyle: "short",
                             }).format(new Date(doc.created_at))}
                           </span>
-                          <span className="text-accent font-semibold">View Draft →</span>
+                          <span className="text-accent font-semibold">View →</span>
                         </div>
                       </Link>
                     </li>
@@ -79,10 +79,9 @@ export default async function CreateDocumentPage() {
             </div>
 
             <div className="rounded-xl border border-border/60 bg-surface/50 p-4 text-xs text-muted space-y-2">
-              <p className="font-semibold text-foreground">💡 How generation works</p>
+              <p className="font-semibold text-foreground">💡 Guided Agreement Builder</p>
               <p className="leading-relaxed">
-                Your inputs are validated using schema controls before being passed to Gemini. 
-                The AI structures the document into fixed section modules with stable IDs to prepare for future interactive review and explanation features.
+                Your responses are structured into fixed legal section modules, preparing your agreement for instant plain-language breakdown and clause-level review.
               </p>
             </div>
           </div>

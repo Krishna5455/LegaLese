@@ -37,19 +37,19 @@ export function DocumentReviewView({
     switch (status) {
       case "clear":
         return (
-          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400">
             ✓ CLEAR
           </span>
         );
       case "attention":
         return (
-          <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-            ⚠️ ATTENTION
+          <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-700 dark:text-amber-400">
+            ⚠️ NEEDS ATTENTION
           </span>
         );
       case "potential_concern":
         return (
-          <span className="rounded-full bg-rose-500/10 border border-rose-500/30 px-2.5 py-0.5 text-xs font-semibold text-rose-700 dark:text-rose-400">
+          <span className="rounded-full bg-rose-500/10 border border-rose-500/30 px-3 py-1 text-xs font-bold text-rose-700 dark:text-rose-400">
             ⚠️ POTENTIAL CONCERN
           </span>
         );
@@ -57,39 +57,31 @@ export function DocumentReviewView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-indigo-500/30 bg-indigo-500/5 p-7 sm:p-8 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400">
-              Clause-Level Review
-            </span>
-            <span className="text-xs text-muted font-mono">
-              {review.findings.length} findings identified
-            </span>
-          </div>
-          <h2 className="mt-2 text-xl font-bold tracking-tight text-foreground">
-            Contract Review: {documentTitle}
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+            Review your agreement
           </h2>
-          <p className="mt-1 text-xs text-muted">
-            Actionable clause breakdown categorized by clarity, attention items, and potential concerns.
+          <p className="mt-1.5 text-base text-muted">
+            We found a few areas worth a closer look ({documentTitle}).
           </p>
         </div>
 
         {onReturnToDocument ? (
           <button
             onClick={onReturnToDocument}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-accent hover:underline shrink-0"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-accent hover:underline shrink-0"
           >
-            ← View Full Agreement Text
+            ← View Agreement
           </button>
         ) : null}
       </div>
 
       {/* Prominent Legal Disclaimer Banner */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-800 dark:text-amber-300 space-y-1">
-        <div className="flex items-center gap-2 font-bold">
+      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-900 dark:text-amber-300 space-y-1.5">
+        <div className="flex items-center gap-2 font-bold text-base">
           <span>⚠️ Important Legal Notice</span>
         </div>
         <p className="leading-relaxed">
@@ -98,26 +90,23 @@ export function DocumentReviewView({
       </div>
 
       {/* Overall Summary Card */}
-      <div className="rounded-xl border border-border bg-surface p-6 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base">📊</span>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-            Agreement Review Summary
-          </h3>
-        </div>
-        <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+      <div className="rounded-2xl border border-border bg-surface p-7 sm:p-8 space-y-3 card-hover shadow-xs">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted">
+          Review Overview
+        </h3>
+        <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">
           {review.overall_summary}
         </p>
       </div>
 
       {/* Filter / Status Count Pills */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => setSelectedStatusFilter("all")}
-            className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
               selectedStatusFilter === "all"
-                ? "bg-accent text-white"
+                ? "bg-accent text-white shadow-2xs"
                 : "bg-surface border border-border text-foreground hover:border-accent/40"
             }`}
           >
@@ -127,9 +116,9 @@ export function DocumentReviewView({
           {clearCount > 0 ? (
             <button
               onClick={() => setSelectedStatusFilter("clear")}
-              className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
                 selectedStatusFilter === "clear"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-2xs"
                   : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20"
               }`}
             >
@@ -140,22 +129,22 @@ export function DocumentReviewView({
           {attentionCount > 0 ? (
             <button
               onClick={() => setSelectedStatusFilter("attention")}
-              className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
                 selectedStatusFilter === "attention"
-                  ? "bg-amber-600 text-white"
+                  ? "bg-amber-600 text-white shadow-2xs"
                   : "bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20"
               }`}
             >
-              ⚠️ Attention ({attentionCount})
+              ⚠️ Needs Attention ({attentionCount})
             </button>
           ) : null}
 
           {concernCount > 0 ? (
             <button
               onClick={() => setSelectedStatusFilter("potential_concern")}
-              className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-xl px-4 py-1.5 text-xs font-bold transition-all ${
                 selectedStatusFilter === "potential_concern"
-                  ? "bg-rose-600 text-white"
+                  ? "bg-rose-600 text-white shadow-2xs"
                   : "bg-rose-500/10 border border-rose-500/30 text-rose-700 dark:text-rose-400 hover:bg-rose-500/20"
               }`}
             >
@@ -164,26 +153,26 @@ export function DocumentReviewView({
           ) : null}
         </div>
 
-        <span className="text-xs text-muted font-mono">
-          Showing {filteredFindings.length} of {review.findings.length}
+        <span className="text-xs text-muted font-mono font-semibold">
+          {filteredFindings.length} of {review.findings.length} items
         </span>
       </div>
 
       {/* Clause Finding Cards */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {filteredFindings.map((finding, idx) => (
           <article
             key={idx}
-            className="rounded-xl border border-border bg-surface p-6 space-y-4 transition-colors hover:border-accent/30"
+            className="rounded-2xl border border-border bg-surface p-7 sm:p-8 space-y-5 transition-all card-hover shadow-xs"
           >
             {/* Finding Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border/50 pb-3">
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-4">
+              <div className="flex items-center gap-3 flex-wrap">
                 {getStatusBadge(finding.status)}
-                <span className="rounded bg-accent/10 border border-accent/20 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                <span className="rounded-md bg-accent/10 px-2.5 py-0.5 text-xs font-bold text-accent">
                   {finding.category}
                 </span>
-                <h4 className="text-sm font-bold text-foreground">
+                <h4 className="text-lg font-bold text-foreground">
                   {finding.section_title}
                 </h4>
               </div>
@@ -191,22 +180,22 @@ export function DocumentReviewView({
               {onJumpToSection ? (
                 <button
                   onClick={() => onJumpToSection(finding.section_id)}
-                  className="inline-flex items-center text-xs font-medium text-accent hover:underline shrink-0"
+                  className="inline-flex items-center text-xs font-bold text-accent hover:underline shrink-0"
                 >
-                  View Clause →
+                  View clause →
                 </button>
               ) : null}
             </div>
 
             {/* Excerpt Box */}
-            <div className="rounded-lg border border-border/80 bg-background/60 p-3 text-xs italic text-foreground/80 border-l-4 border-l-accent/60">
+            <div className="rounded-xl border border-border bg-surface-inset p-4 text-base italic text-foreground/80 border-l-4 border-l-accent/70 leading-relaxed">
               &quot;{finding.clause_excerpt}&quot;
             </div>
 
             {/* Why It Matters & What To Clarify */}
-            <div className="grid gap-4 sm:grid-cols-2 text-xs">
-              <div className="space-y-1">
-                <span className="font-bold text-foreground uppercase tracking-wider text-[10px] block">
+            <div className="grid gap-5 sm:grid-cols-2 text-base">
+              <div className="space-y-1.5">
+                <span className="font-bold text-foreground uppercase tracking-wider text-xs block">
                   Why It Matters
                 </span>
                 <p className="text-foreground/90 leading-relaxed">
@@ -214,8 +203,8 @@ export function DocumentReviewView({
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <span className="font-bold text-foreground uppercase tracking-wider text-[10px] block">
+              <div className="space-y-1.5">
+                <span className="font-bold text-foreground uppercase tracking-wider text-xs block">
                   What To Clarify
                 </span>
                 <p className="text-foreground/90 leading-relaxed">

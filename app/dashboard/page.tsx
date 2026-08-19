@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
@@ -133,8 +134,8 @@ export default async function DashboardPage() {
 
   const totalCount = documents?.length ?? 0;
   const analyzedCount = Object.keys(analysesMap).length;
-  const highRiskCount = Object.values(analysesMap).filter(
-    (a) => a.risk_score === 3,
+  const attentionCount = Object.values(analysesMap).filter(
+    (a) => a.risk_score === 3 || a.risk_score === 2,
   ).length;
 
   return (
@@ -142,77 +143,113 @@ export default async function DashboardPage() {
       {/* Header */}
       <DashboardNav userEmail={user.email} active="dashboard" />
 
-      {/* Main Workspace */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8 space-y-8">
-        {/* Page Title Header */}
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Contract Dashboard
-            </h1>
-            <p className="text-xs text-muted">
-              Manage your legal agreements, extractions, and AI analyses.
-            </p>
-          </div>
+      {/* Main Workspace Container */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 sm:px-8 py-10 space-y-10">
+        {/* Hero Header */}
+        <div className="space-y-1.5">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            Welcome back
+          </h1>
+          <p className="text-base text-muted font-normal">
+            What would you like to do today?
+          </p>
         </div>
 
-        {/* 1. METRICS TOP BANNER */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
-              Total Contracts
-            </p>
-            <p className="mt-2 text-2xl font-bold text-foreground">
-              {totalCount}
-            </p>
+        {/* Primary Action Cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Card 1: Create a Legal Document */}
+          <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 flex flex-col justify-between card-hover shadow-xs">
+            <div className="space-y-3.5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent font-bold text-xl shadow-xs">
+                📝
+              </div>
+              <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+                Create a Legal Document
+              </h2>
+              <p className="text-base text-muted leading-relaxed">
+                Answer a few simple questions and create your agreement in minutes.
+              </p>
+            </div>
+            <div>
+              <Link
+                href="/dashboard/create"
+                className="inline-flex items-center gap-1.5 text-base font-bold text-white bg-accent hover:bg-accent-hover px-5 py-2.5 rounded-xl transition-all shadow-xs"
+              >
+                Create document →
+              </Link>
+            </div>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
-              Analyzed
-            </p>
-            <p className="mt-2 text-2xl font-bold text-accent">
-              {analyzedCount}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
-              High Risk
-            </p>
-            <p className="mt-2 text-2xl font-bold text-red-400">
-              {highRiskCount}
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <p className="text-xs font-semibold text-muted uppercase tracking-wider">
-              Engine Status
-            </p>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-xs font-mono text-foreground font-semibold">
-                Gemini 3.6 Ready
-              </span>
+
+          {/* Card 2: Analyze a Contract */}
+          <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 flex flex-col justify-between card-hover shadow-xs">
+            <div className="space-y-3.5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 font-bold text-xl shadow-xs">
+                🔍
+              </div>
+              <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+                Analyze a Contract
+              </h2>
+              <p className="text-base text-muted leading-relaxed">
+                Upload an existing contract and understand what needs attention before signing.
+              </p>
+            </div>
+            <div>
+              <a
+                href="#upload"
+                className="inline-flex items-center gap-1.5 text-base font-bold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-5 py-2.5 rounded-xl transition-all"
+              >
+                Analyze document →
+              </a>
             </div>
           </div>
         </div>
 
-        {/* 2. COMPACT CONTRACT UPLOAD */}
-        <section className="space-y-3">
+        {/* Workspace Metrics Summary */}
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">
+              Total Contracts
+            </p>
+            <p className="mt-2 text-3xl font-extrabold text-foreground">
+              {totalCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">
+              Analyzed Documents
+            </p>
+            <p className="mt-2 text-3xl font-extrabold text-accent">
+              {analyzedCount}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover col-span-2 sm:col-span-1">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted">
+              Needs Attention
+            </p>
+            <p className="mt-2 text-3xl font-extrabold text-amber-600">
+              {attentionCount}
+            </p>
+          </div>
+        </div>
+
+        {/* Contract Upload Section */}
+        <section id="upload" className="space-y-3">
           <ContractUpload />
         </section>
 
-        {/* 3. CONTRACT TABLE */}
-        <section className="rounded-xl border border-border bg-surface p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        {/* Recent Documents Table */}
+        <section className="rounded-2xl border border-border bg-surface p-8 space-y-6 shadow-xs card-hover">
+          <div className="flex items-center justify-between border-b border-border pb-5">
             <div>
-              <h2 className="text-base font-bold text-foreground">
-                Your Contracts
+              <h2 className="text-xl font-bold text-foreground">
+                Recent Documents
               </h2>
-              <p className="text-xs text-muted">
+              <p className="text-base text-muted">
                 View stored agreements and access deep-dive contract reviews.
               </p>
             </div>
             {documents && documents.length > 0 && (
-              <span className="rounded-full bg-accent/10 border border-accent/20 px-2.5 py-0.5 text-xs font-mono font-semibold text-accent">
+              <span className="rounded-full bg-accent/10 border border-accent/20 px-3.5 py-1 text-xs font-bold text-accent">
                 {documents.length} Total
               </span>
             )}
