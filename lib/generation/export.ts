@@ -46,10 +46,14 @@ export function generatedDocumentToMarkdown(
   return lines.join("\n");
 }
 
-export function generatedDocumentDownloadFilename(title: string): string {
+export function generatedDocumentDownloadFilename(
+  title: string,
+  format: "pdf" | "docx" | "md" = "md",
+): string {
   const safe = title
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/_+/g, "_")
     .slice(0, 80);
-  return `${safe || "Freelance_Service_Agreement"}.md`;
+  const base = safe || "Freelance_Service_Agreement";
+  return `${base}.${format}`;
 }

@@ -14,15 +14,19 @@ type GeneratedDocumentWorkspaceProps = {
   document: GeneratedDocumentRow;
 };
 
+type ExportFormat = "pdf" | "docx" | "md";
+
 export function GeneratedDocumentWorkspace({
   document: doc,
 }: GeneratedDocumentWorkspaceProps) {
   const [copied, setCopied] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [activeExportFormat, setActiveExportFormat] = useState<ExportFormat | null>(
+    null,
+  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const content = doc.generated_content;
   const markdownText = generatedDocumentToMarkdown(content, doc.created_at);
-  const filename = generatedDocumentDownloadFilename(content.title);
 
   const handleCopy = async () => {
     try {
@@ -31,13 +35,29 @@ export function GeneratedDocumentWorkspace({
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {
       console.error("Failed to copy to clipboard:", err);
+      setErrorMessage("Failed to copy document content to clipboard.");
     }
   };
 
-  const handleDownload = () => {
-    setIsDownloading(true);
+  const handleDownload = async (format: ExportFormat) => {
+    setActiveExportFormat(format);
+    setErrorMessage(null);
+
     try {
-      const blob = new Blob([markdownText], { type: "text/markdown;charset=utf-8" });
+      const response = await fetch(
+        `/api/documents/generated/${doc.id}/export?format=${format}`,
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            `Failed to download ${format.toUpperCase()} document export.`,
+        );
+      }
+
+      const blob = await response.blob();
+      const filename = generatedDocumentDownloadFilename(content.title, format);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -47,9 +67,14 @@ export function GeneratedDocumentWorkspace({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error("Failed to trigger download:", err);
+      console.error(`Export download failed (${format}):`, err);
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while downloading the document.",
+      );
     } finally {
-      setIsDownloading(false);
+      setActiveExportFormat(null);
     }
   };
 
@@ -90,26 +115,67 @@ export function GeneratedDocumentWorkspace({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* Export Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              variant="outline"
-              onClick={handleCopy}
+              onClick={() => handleDownload("pdf")}
+              disabled={!!activeExportFormat}
               className="text-xs"
             >
-              {copied ? "✓ Copied to Clipboard" : "Copy Markdown"}
+              {activeExportFormat === "pdf"
+                ? "Preparing PDF..."
+                : "Download PDF (.pdf)"}
             </Button>
 
             <Button
               type="button"
-              onClick={handleDownload}
-              disabled={isDownloading}
+              variant="outline"
+              onClick={() => handleDownload("docx")}
+              disabled={!!activeExportFormat}
               className="text-xs"
             >
-              {isDownloading ? "Preparing..." : "Download Markdown (.md)"}
+              {activeExportFormat === "docx"
+                ? "Preparing DOCX..."
+                : "Download DOCX (.docx)"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCopy}
+              disabled={!!activeExportFormat}
+              className="text-xs"
+            >
+              {copied ? "✓ Copied" : "Copy"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleDownload("md")}
+              disabled={!!activeExportFormat}
+              className="text-xs"
+            >
+              {activeExportFormat === "md"
+                ? "Preparing MD..."
+                : "Download Markdown (.md)"}
             </Button>
           </div>
         </div>
+
+        {/* Export Error Alert */}
+        {errorMessage ? (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-center justify-between">
+            <span>⚠️ {errorMessage}</span>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-xs font-semibold underline hover:no-underline ml-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
 
         {/* Parties summary card */}
         <div className="rounded-lg border border-border/80 bg-background/50 p-4 text-xs space-y-2">
