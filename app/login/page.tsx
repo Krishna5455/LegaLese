@@ -37,6 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           submitLabel="Sign in"
           action={signIn}
           initialError={callbackError}
+          next={params.next ?? "/dashboard"}
           footer={
             <p className="text-sm text-muted">
               Don&apos;t have an account?{" "}
