@@ -20,12 +20,16 @@ export async function signUp(
     return { error: "Email and password are required." };
   }
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const supabase = await createClient();
 
-  // 1. Attempt to sign up directly without requiring email verification
+  // 1. Attempt signup, preserving emailRedirectTo so email verification links work when sent
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    },
   });
 
   // If user already exists, directly sign them in with their credentials
@@ -44,12 +48,12 @@ export async function signUp(
     return { error: error.message };
   }
 
-  // 2. If a session is already returned, redirect directly to dashboard
+  // 2. If a session is already established (e.g. Confirm email is turned off in Supabase), redirect directly
   if (data?.session) {
     redirect("/dashboard");
   }
 
-  // 3. Attempt immediate sign-in with password so user is directly logged in
+  // 3. Attempt immediate password login so the user is directly signed in without waiting
   const { data: signInData, error: signInError } =
     await supabase.auth.signInWithPassword({
       email,
@@ -60,17 +64,10 @@ export async function signUp(
     redirect("/dashboard");
   }
 
-  if (signInError) {
-    if (signInError.message.toLowerCase().includes("email not confirmed")) {
-      return {
-        error:
-          "To sign in directly without email verification, turn off 'Confirm email' in your Supabase Dashboard (Authentication -> Providers -> Email -> Confirm email).",
-      };
-    }
-    return { error: signInError.message };
-  }
-
-  redirect("/dashboard");
+  // 4. If Supabase has email confirmation enabled, inform the user with verification instructions
+  return {
+    message: `Account created! We've sent a verification link to ${email}. Click the link in your email to sign in directly. (To skip this email step permanently, turn off 'Confirm email' in your Supabase Auth settings).`,
+  };
 }
 
 export async function signIn(
@@ -94,7 +91,7 @@ export async function signIn(
     if (error.message.toLowerCase().includes("email not confirmed")) {
       return {
         error:
-          "Email verification is currently required by your Supabase project settings. Turn off 'Confirm email' in Supabase Dashboard (Authentication -> Providers -> Email) to sign in directly.",
+          "Your email address has not been confirmed yet. Please check your inbox for the verification link, or turn off 'Confirm email' in your Supabase Dashboard settings to sign in without email verification.",
       };
     }
     return { error: error.message };
