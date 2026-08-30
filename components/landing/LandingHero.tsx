@@ -65,16 +65,16 @@ export function LandingHero() {
               </Link>
             </div>
 
-            {/* Verified Statistics Pill */}
-            <div className="pt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-mono text-[#5F6368]">
+            {/* Feature Highlights */}
+            <div className="pt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#5F6368]">
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#059669]" />
-                <strong>₹2.4Cr+</strong> Client Deposits Protected
+                Plain-English Risk Analysis
               </span>
               <span>•</span>
-              <span><strong>10,000+</strong> Agreements Drafted</span>
+              <span>Guided Agreement Builder</span>
               <span>•</span>
-              <span><strong>100%</strong> Enforceable Clauses</span>
+              <span>Instant PDF & DOCX Export</span>
             </div>
           </div>
 
@@ -93,20 +93,20 @@ export function LandingHero() {
               {/* Bottom Subtle Gradient for Overlay Text */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
 
-              {/* Legal Authority Badge on Portrait */}
+              {/* Legal Standards Badge on Portrait */}
               <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-white/40 text-[11px] font-semibold text-[#171717] shadow-sm flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Bar-Certified Standards</span>
+                <span>Structured Legal Frameworks</span>
               </div>
 
               {/* Floating Live Audited Contract Chip at Bottom-Left */}
               <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E5E2] shadow-lg space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[10px] uppercase font-bold text-[#171717]">
-                    Active Pre-Sign Audit
+                    Pre-Sign Contract Audit
                   </span>
                   <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#F0FDF4] text-[#166534] border border-[#BBF7D0]">
-                    Score 94/100
+                    Audit Passed
                   </span>
                 </div>
                 <div className="space-y-1 text-[11px]">
@@ -121,26 +121,6 @@ export function LandingHero() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* As Seen In / Press Credibility Strip */}
-      <div className="relative mx-auto max-w-7xl px-6 sm:px-8 w-full border-t border-[#E7E5E2] pt-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <span className="text-[11px] font-mono font-bold tracking-widest text-[#8A8F98] uppercase">
-            As Featured In & Trusted By Founders Across
-          </span>
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 text-xs font-semibold tracking-wider text-[#5F6368] uppercase font-mono">
-            <span className="hover:text-[#171717] transition-colors">TechCrunch</span>
-            <span className="text-[#D4D2CD]">•</span>
-            <span className="hover:text-[#171717] transition-colors">Bloomberg Law</span>
-            <span className="text-[#D4D2CD]">•</span>
-            <span className="hover:text-[#171717] transition-colors">Forbes</span>
-            <span className="text-[#D4D2CD]">•</span>
-            <span className="hover:text-[#171717] transition-colors">The Wall Street Journal</span>
-            <span className="text-[#D4D2CD]">•</span>
-            <span className="hover:text-[#171717] transition-colors">Y Combinator Alumni</span>
           </div>
         </div>
       </div>

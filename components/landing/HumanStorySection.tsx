@@ -45,13 +45,13 @@ export function HumanStorySection() {
             <div className="max-w-xl text-white space-y-2">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/20 backdrop-blur-md text-white text-xs font-semibold">
                 <ShieldCheck className="w-4 h-4 text-[#10B981]" />
-                Fair Terms Enforced
+                Fair Contract Terms
               </div>
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-white leading-snug">
-                &ldquo;We signed our largest enterprise client contract in 48 hours without spending ₹50,000 on outside counsel.&rdquo;
+                Review agreements in minutes and protect your business before signing.
               </h3>
-              <p className="text-xs sm:text-sm text-white/80 font-mono">
-                Elena Rostova • Design Director & Agency Founder
+              <p className="text-xs sm:text-sm text-white/80">
+                Transparent milestones, clear liability limits, and direct clause-level insights.
               </p>
             </div>
 

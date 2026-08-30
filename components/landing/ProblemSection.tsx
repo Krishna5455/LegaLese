@@ -44,11 +44,11 @@ export function ProblemSection() {
                 The Reality of Unchecked Boilerplate
               </span>
               <h3 className="text-lg sm:text-xl font-bold">
-                73% of independent contractors sign agreements with uncapped liability without realizing it.
+                Complex contracts often bury uncapped indemnity and delayed payment terms in fine print.
               </h3>
             </div>
             <span className="text-xs font-mono text-white/70">
-              Source: LegalTech Commercial Risk Survey
+              Commercial Risk Prevention
             </span>
           </div>
         </div>
