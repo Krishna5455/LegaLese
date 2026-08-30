@@ -3,16 +3,7 @@ import Link from "next/link";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { signUp } from "@/lib/actions/auth";
 
-type SignUpPageProps = {
-  searchParams?: Promise<{
-    error?: string;
-    next?: string;
-  }>;
-};
-
-export default async function SignUpPage({ searchParams }: SignUpPageProps) {
-  const params = searchParams ? await searchParams : {};
-
+export default function SignUpPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-surface/80 backdrop-blur-sm">
@@ -33,7 +24,6 @@ export default async function SignUpPage({ searchParams }: SignUpPageProps) {
           submitLabel="Sign up"
           action={signUp}
           passwordAutoComplete="new-password"
-          next={params.next ?? "/dashboard"}
           footer={
             <p className="text-sm text-muted">
               Already have an account?{" "}

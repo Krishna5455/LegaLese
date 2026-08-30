@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 
 import { Button } from "@/components/Button";
-import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import type { AuthActionState } from "@/lib/actions/auth";
 
 type AuthFormProps = {
@@ -18,7 +17,6 @@ type AuthFormProps = {
   footer?: React.ReactNode;
   children?: React.ReactNode;
   passwordAutoComplete?: "current-password" | "new-password";
-  next?: string;
 };
 
 export function AuthForm({
@@ -30,39 +28,16 @@ export function AuthForm({
   footer,
   children,
   passwordAutoComplete = "current-password",
-  next = "/dashboard",
 }: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, {
     error: initialError,
   });
-
-  const isSignUp =
-    title.toLowerCase().includes("create") ||
-    title.toLowerCase().includes("sign up");
 
   return (
     <div className="rounded-xl border border-border bg-surface p-8 shadow-sm max-w-md w-full mx-auto">
       <div className="mb-6 text-center sm:text-left">
         <h1 className="text-2xl font-bold text-foreground">{title}</h1>
         <p className="mt-2 text-xs text-muted leading-relaxed">{description}</p>
-      </div>
-
-      {/* Google OAuth Provider Button */}
-      <GoogleSignInButton
-        next={next}
-        text={isSignUp ? "Sign up with Google" : "Continue with Google"}
-      />
-
-      {/* Divider */}
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-[10px] uppercase font-mono tracking-wider">
-          <span className="bg-surface px-3 text-muted">
-            Or continue with email
-          </span>
-        </div>
       </div>
 
       <form action={formAction} className="space-y-5">
@@ -108,6 +83,12 @@ export function AuthForm({
         {state.error ? (
           <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs font-medium text-red-500 dark:text-red-400 leading-relaxed">
             {state.error}
+          </div>
+        ) : null}
+
+        {state.message ? (
+          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-xs font-medium text-emerald-600 dark:text-emerald-400 leading-relaxed">
+            {state.message}
           </div>
         ) : null}
 
