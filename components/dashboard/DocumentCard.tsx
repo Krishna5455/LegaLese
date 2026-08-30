@@ -1,18 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
+import { useState, useTransition } from "react";
 
-
-
-
-import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel";
-import { analyzeDocument } from "@/lib/actions/analyses";
+import { analyzeDocument, getAnalysis } from "@/lib/actions/analyses";
 import { deleteDocument, processDocument } from "@/lib/actions/documents";
 import { formatBytes } from "@/lib/documents/validation";
 import type { DetailedAnalysis } from "@/types/analysis";
 import type { Document } from "@/types/database";
+
+const AnalysisPanel = dynamic(
+  () =>
+    import("@/components/dashboard/AnalysisPanel").then(
+      (mod) => mod.AnalysisPanel,
+    ),
+  {
+    loading: () => (
+      <div className="mt-4 rounded-xl border border-border bg-surface p-6 text-center text-xs text-muted">
+        <div className="flex items-center justify-center gap-2">
+          <svg className="h-4 w-4 animate-spin text-accent" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <span>Loading analysis details...</span>
+        </div>
+      </div>
+    ),
+    ssr: false,
+  },
+);
 
 function formatDate(value: string) {
   try {
@@ -35,17 +52,17 @@ function getStatusBadge(status?: string | null) {
   const s = (status || "uploaded").toLowerCase();
   if (s === "complete") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
         Ready
       </span>
     );
   }
   if (s === "processing") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 px-2.5 py-0.5 text-xs font-medium text-yellow-700">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
         <svg
-          className="h-3 w-3 animate-spin text-yellow-600"
+          className="h-3 w-3 animate-spin text-amber-600"
           viewBox="0 0 24 24"
           fill="none"
         >
@@ -69,15 +86,15 @@ function getStatusBadge(status?: string | null) {
   }
   if (s === "failed") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+        <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
         Failed
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-      <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
       Uploaded
     </span>
   );
@@ -90,31 +107,21 @@ export function DocumentCard({
   document: Document;
   existingAnalysis?: DetailedAnalysis | null;
 }) {
-  const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isDeleting, startDeleteTransition] = useTransition();
   const [isProcessing, startProcessTransition] = useTransition();
   const [isAnalyzing, startAnalyzeTransition] = useTransition();
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-  const [localAnalysis, setLocalAnalysis] = useState<DetailedAnalysis | null>(
-    existingAnalysis ?? null,
-  );
+  const [analyzedResult, setAnalyzedResult] = useState<DetailedAnalysis | null>(null);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
-  const isPending = isDeleting || isProcessing || isAnalyzing;
+  const localAnalysis = analyzedResult ?? existingAnalysis ?? null;
+
+  const isPending = isDeleting || isProcessing || isAnalyzing || isLoadingDetails;
   const status = (document.status || "uploaded").toLowerCase();
   const hasAnalysis = localAnalysis != null;
-
-  // Auto-refresh when document status is 'processing' until terminal state
-  useEffect(() => {
-    if (status !== "processing") return;
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [status, router]);
-
 
   const handleDelete = () => {
     setActionError(null);
@@ -144,24 +151,41 @@ export function DocumentCard({
       if (result.error) {
         setActionError(result.error);
       } else if (result.analysis) {
-        setLocalAnalysis(result.analysis);
+        setAnalyzedResult(result.analysis);
         setShowAnalysis(true);
       }
     });
   };
 
+  const handleToggleQuickView = async () => {
+    if (!showAnalysis && localAnalysis && (!localAnalysis.clauses || localAnalysis.clauses.length === 0)) {
+      setIsLoadingDetails(true);
+      try {
+        const res = await getAnalysis(document.id);
+        if (res.analysis) {
+          setAnalyzedResult(res.analysis);
+        }
+      } catch (err) {
+        console.warn("Failed to load full analysis details for quick view:", err);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    }
+    setShowAnalysis((prev) => !prev);
+  };
+
   return (
-    <li className="rounded-lg border border-border bg-surface p-4 transition-shadow hover:shadow-xs">
+    <li className="rounded-xl border border-border bg-surface p-4 transition-all hover:shadow-xs hover:border-slate-300">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-accent/10 text-xs font-bold text-accent">
+        <div className="flex items-start gap-3.5 min-w-0">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-accent-soft border border-accent/20 text-xs font-bold text-accent">
             {getFileType(document)}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
+            <p className="truncate text-sm font-bold text-foreground">
               {document.filename}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-secondary">
               <span>{formatBytes(document.size_bytes)}</span>
               <span>•</span>
               <span>Added {formatDate(document.created_at)}</span>
@@ -179,7 +203,7 @@ export function DocumentCard({
                 type="button"
                 onClick={handleProcess}
                 disabled={isPending}
-                className="rounded border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-background disabled:opacity-50"
+                className="rounded border border-border px-2 py-1 text-xs font-medium text-foreground hover:bg-background disabled:opacity-50 transition-colors"
                 title="Extract and process text"
               >
                 {isProcessing
@@ -196,7 +220,7 @@ export function DocumentCard({
                 type="button"
                 onClick={handleAnalyze}
                 disabled={isPending}
-                className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50 transition-colors shadow-2xs"
                 title="Analyze this contract with AI"
               >
                 {isAnalyzing ? (
@@ -221,46 +245,49 @@ export function DocumentCard({
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    Analyzing…
+                    <span>Analyzing…</span>
                   </>
                 ) : (
-                  "Analyze"
+                  <span>Analyze</span>
                 )}
               </button>
             )}
 
-            {/* View / Hide Analysis toggle & Open Full Analysis link — shown when analysis exists */}
+            {/* View / Hide Analysis toggle & Open Full Analysis link */}
             {hasAnalysis && (
               <>
                 <Link
                   href={`/dashboard/documents/${document.id}`}
-                  className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover transition-colors"
+                  className="inline-flex items-center gap-1 rounded bg-accent px-2.5 py-1 text-xs font-semibold text-white hover:bg-accent-hover transition-colors shadow-2xs"
                   title="Open dedicated analysis workspace"
                 >
-                  Open Full Analysis
+                  <span>Open Full Analysis</span>
                   <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </Link>
                 <button
                   type="button"
-                  onClick={() => setShowAnalysis((v) => !v)}
+                  onClick={handleToggleQuickView}
                   disabled={isPending}
-                  className="rounded border border-accent/30 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 disabled:opacity-50"
+                  className="rounded border border-accent/30 bg-accent/5 px-2.5 py-1 text-xs font-semibold text-accent hover:bg-accent/10 disabled:opacity-50 transition-colors"
                 >
-                  {showAnalysis ? "Hide Quick View" : "Quick View"}
+                  {isLoadingDetails
+                    ? "Loading..."
+                    : showAnalysis
+                      ? "Hide Quick View"
+                      : "Quick View"}
                 </button>
               </>
             )}
           </div>
-
 
           {!isConfirming ? (
             <button
               type="button"
               onClick={() => setIsConfirming(true)}
               disabled={isPending}
-              className="rounded p-1.5 text-xs font-medium text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+              className="rounded p-1.5 text-xs font-medium text-muted hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-colors"
               title="Delete contract"
               aria-label={`Delete ${document.filename}`}
             >
@@ -284,7 +311,7 @@ export function DocumentCard({
                 type="button"
                 onClick={handleDelete}
                 disabled={isPending}
-                className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {isDeleting ? "Deleting..." : "Confirm"}
               </button>
@@ -292,7 +319,7 @@ export function DocumentCard({
                 type="button"
                 onClick={() => setIsConfirming(false)}
                 disabled={isPending}
-                className="rounded border border-border px-2 py-1 text-xs font-medium text-muted hover:text-foreground disabled:opacity-50"
+                className="rounded border border-border px-2 py-1 text-xs font-medium text-muted hover:text-foreground disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>
@@ -307,7 +334,7 @@ export function DocumentCard({
         </p>
       ) : null}
 
-      {/* Inline analysis panel */}
+      {/* Inline analysis panel (lazy loaded on demand) */}
       {showAnalysis && localAnalysis && (
         <AnalysisPanel analysis={localAnalysis} />
       )}

@@ -257,20 +257,21 @@ export function FreelanceAgreementForm() {
   return (
     <div className="space-y-7">
       {/* Wizard Header & Progress Bar */}
-      <div className="rounded-2xl border border-border bg-surface p-6 space-y-4 shadow-xs card-hover">
+      {/* Wizard Header & Progress Bar */}
+      <div className="rounded-xl border border-border bg-surface p-5 sm:p-6 space-y-4 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-white font-bold text-sm shadow-xs">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-white font-bold text-xs shadow-xs">
               {currentStep}
             </span>
             <div>
               <span className="text-base font-bold text-foreground block">
-                {currentStep === 1 && "Step 1: Choose Document Type"}
+                {currentStep === 1 && "Step 1: Agreement Type"}
                 {currentStep === 2 && "Step 2: Agreement Parties"}
                 {currentStep === 3 && "Step 3: Scope, Timing & Payment"}
                 {currentStep === 4 && "Step 4: Review & Generate"}
               </span>
-              <span className="text-sm text-muted">
+              <span className="text-xs text-secondary">
                 {currentStep === 1 && "Select the contract scenario for your agreement"}
                 {currentStep === 2 && "Enter contractor and client identification"}
                 {currentStep === 3 && "Define project deliverables, fees, and schedule"}
@@ -279,34 +280,51 @@ export function FreelanceAgreementForm() {
             </div>
           </div>
 
-          {/* Demo Data Controls Bar */}
-          <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <select
-              value={selectedPreset}
-              onChange={(e) => handleFillDemoData(e.target.value)}
-              className="h-11 rounded-xl border border-border bg-surface px-3 text-xs font-semibold text-foreground outline-none focus:border-accent"
-            >
-              <option value="web_dev">Demo: Web Development</option>
-              <option value="ui_design">Demo: UI/UX Design</option>
-              <option value="marketing">Demo: Digital Marketing</option>
-            </select>
-
-            <button
-              type="button"
-              onClick={() => handleFillDemoData(selectedPreset)}
-              className="h-11 text-xs font-bold text-white bg-accent hover:bg-accent-hover px-4 rounded-xl transition-all shadow-xs flex items-center gap-1.5 shrink-0"
-            >
-              ✨ Try Demo Data
-            </button>
-
-            <span className="text-sm font-mono font-bold text-muted ml-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted hidden lg:inline">Try Preset:</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => handleFillDemoData("web_dev")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  selectedPreset === "web_dev"
+                    ? "bg-accent text-white shadow-xs"
+                    : "bg-accent-soft text-accent border border-accent/20 hover:bg-accent/15"
+                }`}
+              >
+                ⚡ Web Dev
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFillDemoData("ui_design")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  selectedPreset === "ui_design"
+                    ? "bg-accent text-white shadow-xs"
+                    : "bg-accent-soft text-accent border border-accent/20 hover:bg-accent/15"
+                }`}
+              >
+                ⚡ UI/UX
+              </button>
+              <button
+                type="button"
+                onClick={() => handleFillDemoData("marketing")}
+                className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                  selectedPreset === "marketing"
+                    ? "bg-accent text-white shadow-xs"
+                    : "bg-accent-soft text-accent border border-accent/20 hover:bg-accent/15"
+                }`}
+              >
+                ⚡ Marketing
+              </button>
+            </div>
+            <span className="text-xs font-mono font-semibold text-muted ml-2">
               {currentStep}/4
             </span>
           </div>
         </div>
 
         {/* Visual Progress Bar */}
-        <div className="h-2 w-full rounded-full bg-border/60 overflow-hidden">
+        <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
           <div
             className="h-full bg-accent transition-all duration-300 ease-out"
             style={{ width: `${(currentStep / 4) * 100}%` }}
@@ -316,9 +334,10 @@ export function FreelanceAgreementForm() {
 
       {/* Demo Banner Feedback */}
       {demoBannerMessage ? (
-        <div className="rounded-xl border border-accent/30 bg-accent/10 p-4 text-sm font-semibold text-accent flex items-center justify-between shadow-xs animate-fadeIn">
+        <div className="rounded-xl border border-accent/20 bg-accent-soft p-3.5 text-xs font-semibold text-accent flex items-center justify-between shadow-xs animate-fadeIn">
           <span>{demoBannerMessage}</span>
           <button
+            type="button"
             onClick={() => setDemoBannerMessage(null)}
             className="text-xs font-bold underline hover:no-underline ml-2"
           >
@@ -326,6 +345,7 @@ export function FreelanceAgreementForm() {
           </button>
         </div>
       ) : null}
+
 
       {/* Form Steps */}
       <form onSubmit={handleSubmit} className="space-y-7">

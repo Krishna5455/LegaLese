@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useRef, useState, useTransition } from "react";
 
-import { Button } from "@/components/Button";
 import { uploadDocument } from "@/lib/actions/documents";
+
 import {
   formatBytes,
   validateDocumentFile,
@@ -99,17 +99,17 @@ export function ContractUpload() {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 transition-all">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-xl border border-border bg-surface p-5 sm:p-6 transition-all shadow-xs">
+      <div className="mb-3.5 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-bold text-foreground">
-            Upload New Agreement
+            Upload Existing Contract
           </h2>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-secondary">
             Supported files: Digital PDF, Word (.docx), or Text (.txt) up to 50 MB.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted border border-border px-2 py-0.5 rounded bg-surface-inset">
+        <div className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono text-muted border border-border px-2 py-0.5 rounded bg-background">
           <span>PDF</span>
           <span>•</span>
           <span>DOCX</span>
@@ -140,16 +140,16 @@ export function ContractUpload() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onClick={() => fileInputRef.current?.click()}
-          className={`flex cursor-pointer items-center justify-between rounded-lg border border-dashed px-5 py-4 transition-colors ${
+          className={`flex cursor-pointer items-center justify-between rounded-xl border border-dashed px-6 py-5 transition-all ${
             isDragOver
-              ? "border-accent bg-accent/10"
-              : "border-border bg-surface-inset hover:border-border-strong hover:bg-surface-hover"
+              ? "border-[#059669] bg-[#059669]/5"
+              : "border-[#E7E5E2] bg-white hover:border-[#D4D2CD] hover:bg-[#F7F7F5]"
           } ${isPending ? "pointer-events-none opacity-50" : ""}`}
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-accent/10 border border-accent/20 text-accent">
+          <div className="flex items-center gap-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[#059669]/10 border border-[#059669]/20 text-[#059669]">
               <svg
-                className="h-4 w-4"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -163,32 +163,32 @@ export function ContractUpload() {
               </svg>
             </div>
             <div>
-              <p className="text-xs font-semibold text-foreground">
-                Drop your contract file here or <span className="text-accent underline">browse</span>
+              <p className="text-xs sm:text-sm font-semibold text-[#171717]">
+                Drop your contract file here or <span className="text-[#059669] underline font-semibold">browse computer</span>
               </p>
-              <p className="text-[11px] text-muted">
-                Private & secure storage scoped to your account
+              <p className="text-[11px] text-[#8A8F98]">
+                Supports PDF and DOCX files up to 10MB • Private & secure
               </p>
             </div>
           </div>
 
-          <Button type="button" variant="secondary" className="px-3 py-1.5 text-xs pointer-events-none">
+          <span className="hidden sm:inline-flex rounded-lg border border-[#E7E5E2] bg-white px-3.5 py-1.5 text-xs font-medium text-[#171717] shadow-2xs hover:bg-[#F7F7F5] transition-colors">
             Choose File
-          </Button>
+          </span>
         </div>
       ) : (
         /* Selected File Card */
-        <div className="rounded-lg border border-border bg-surface-inset p-3.5">
+        <div className="rounded-xl border border-[#E7E5E2] bg-white p-4 shadow-2xs">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-accent/15 border border-accent/30 font-mono font-bold text-accent text-xs">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#059669]/10 border border-[#059669]/20 font-mono font-bold text-[#059669] text-xs">
                 {selectedFile.name.split(".").pop()?.toUpperCase() || "DOC"}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium text-foreground">
+                <p className="truncate text-xs font-semibold text-[#171717]">
                   {selectedFile.name}
                 </p>
-                <p className="text-[11px] font-mono text-muted">
+                <p className="text-[11px] font-mono text-[#8A8F98]">
                   {formatBytes(selectedFile.size)}
                 </p>
               </div>
@@ -199,19 +199,18 @@ export function ContractUpload() {
                 type="button"
                 onClick={handleClearSelection}
                 disabled={isPending}
-                className="text-xs font-medium text-muted hover:text-red-400 disabled:opacity-50 px-2 py-1"
+                className="text-xs font-medium text-[#5F6368] hover:text-[#B91C1C] disabled:opacity-50 px-2.5 py-1.5 transition-colors"
               >
                 Cancel
               </button>
-              <Button
+              <button
                 type="button"
-                variant="primary"
                 onClick={handleUpload}
                 disabled={isPending}
-                className="px-3.5 py-1.5 text-xs"
+                className="rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#262626] transition-colors shadow-xs"
               >
                 {isPending ? "Uploading..." : "Upload Contract"}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -219,17 +218,18 @@ export function ContractUpload() {
 
       {/* Error Message */}
       {errorMessage ? (
-        <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
           {errorMessage}
         </div>
       ) : null}
 
       {/* Success Message */}
       {successMessage ? (
-        <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700">
           {successMessage}
         </div>
       ) : null}
     </div>
   );
 }
+

@@ -3,9 +3,37 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { Button } from "@/components/Button";
-import { DocumentExplanationView } from "@/components/create/DocumentExplanationView";
-import { DocumentReviewView } from "@/components/create/DocumentReviewView";
+import dynamic from "next/dynamic";
+
+const DocumentExplanationView = dynamic(
+  () =>
+    import("@/components/create/DocumentExplanationView").then(
+      (m) => m.DocumentExplanationView,
+    ),
+  {
+    loading: () => (
+      <div className="rounded-xl border border-border bg-surface p-8 text-center text-xs text-muted animate-pulse">
+        Loading plain-language explanation view...
+      </div>
+    ),
+    ssr: false,
+  },
+);
+
+const DocumentReviewView = dynamic(
+  () =>
+    import("@/components/create/DocumentReviewView").then(
+      (m) => m.DocumentReviewView,
+    ),
+  {
+    loading: () => (
+      <div className="rounded-xl border border-border bg-surface p-8 text-center text-xs text-muted animate-pulse">
+        Loading agreement review and risk analysis...
+      </div>
+    ),
+    ssr: false,
+  },
+);
 import { exportGeneratedDocument } from "@/lib/actions/generated-documents";
 import { explainGeneratedDocumentAction } from "@/lib/actions/explanation";
 import { reviewGeneratedDocumentAction } from "@/lib/actions/review";
@@ -195,127 +223,129 @@ export function GeneratedDocumentWorkspace({
   );
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Top Back Navigation Link */}
       <div>
         <Link
           href="/dashboard"
-          className="text-sm font-bold text-accent hover:underline inline-flex items-center gap-1.5"
+          className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5"
         >
-          ← My Documents
+          ← Back to Dashboard
         </Link>
       </div>
 
+
       {/* Header Banner & Title */}
-      <div className="rounded-2xl border border-border bg-surface p-7 sm:p-8 space-y-5 shadow-xs">
+      <div className="rounded-xl border border-border bg-surface p-6 sm:p-7 space-y-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                Draft · Saved
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                Draft · Saved in Workspace
               </span>
             </div>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+            <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {content.title}
             </h1>
-            <p className="mt-1.5 text-base text-muted font-semibold">
+            <p className="mt-1 text-sm text-secondary">
               {content.parties.clientName} × {content.parties.freelancerName}
             </p>
           </div>
 
-          {/* Export Action Buttons (PDF is Primary) */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Button
+          {/* Export Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
               type="button"
-              variant="primary"
               onClick={() => handleDownload("pdf")}
               disabled={!!activeExportFormat}
-              className="h-11 px-5 text-sm font-bold shadow-xs bg-accent text-white hover:bg-accent-hover"
+              className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50 transition-colors shadow-xs"
             >
-              {activeExportFormat === "pdf"
-                ? "Preparing PDF..."
-                : "Download PDF"}
-            </Button>
+              {activeExportFormat === "pdf" ? "Preparing PDF..." : "Download PDF"}
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={() => handleDownload("docx")}
               disabled={!!activeExportFormat}
-              className="h-11 px-5 text-sm font-bold"
+              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
-              {activeExportFormat === "docx"
-                ? "Preparing DOCX..."
-                : "Download DOCX"}
-            </Button>
+              {activeExportFormat === "docx" ? "Preparing DOCX..." : "DOCX"}
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={() => handleDownload("md")}
               disabled={!!activeExportFormat}
-              className="h-11 px-5 text-sm font-bold"
+              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
-              {activeExportFormat === "md"
-                ? "Preparing MD..."
-                : "Download Markdown"}
-            </Button>
+              {activeExportFormat === "md" ? "Preparing..." : "Markdown"}
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={handleCopy}
               disabled={!!activeExportFormat}
-              className="h-11 px-5 text-sm font-bold"
+              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
             >
               {copied ? "✓ Copied" : "Copy"}
-            </Button>
+            </button>
           </div>
         </div>
 
-        {/* Primary View Switcher Navigation Action Bar */}
-        <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
-          <Button
+        {/* Primary View Switcher Pipeline Navigation Bar */}
+        <div className="flex items-center gap-1.5 p-1 bg-background rounded-lg border border-border overflow-x-auto">
+          <button
             type="button"
-            variant={viewMode === "document" ? "primary" : "outline"}
             onClick={() => setViewMode("document")}
-            className="h-11 px-5 text-sm font-bold"
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer ${
+              viewMode === "document"
+                ? "bg-surface text-accent shadow-xs border border-border"
+                : "text-secondary hover:text-foreground hover:bg-slate-100"
+            }`}
           >
-            View Agreement
-          </Button>
+            📄 View Agreement
+          </button>
 
-          <Button
+          <button
             type="button"
-            variant={viewMode === "explanation" ? "primary" : "outline"}
             onClick={handleUnderstandAgreement}
             disabled={isExplaining}
-            className="h-11 px-5 text-sm font-bold"
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+              viewMode === "explanation"
+                ? "bg-surface text-accent shadow-xs border border-border"
+                : "text-secondary hover:text-foreground hover:bg-slate-100"
+            }`}
           >
-            {isExplaining ? "Analyzing..." : "Understand Agreement"}
-          </Button>
+            <span>💡</span>
+            <span>{isExplaining ? "Analyzing..." : "Understand Agreement"}</span>
+          </button>
 
-          <Button
+          <button
             type="button"
-            variant={viewMode === "review" ? "primary" : "outline"}
             onClick={handleReviewAgreement}
             disabled={isReviewing}
-            className="h-11 px-5 text-sm font-bold"
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+              viewMode === "review"
+                ? "bg-surface text-accent shadow-xs border border-border"
+                : "text-secondary hover:text-foreground hover:bg-slate-100"
+            }`}
           >
-            {isReviewing ? "Reviewing..." : "Review Agreement"}
-          </Button>
+            <span>⚠️</span>
+            <span>{isReviewing ? "Reviewing..." : "Review Agreement"}</span>
+          </button>
 
-          {/* Customize Roadmap Teaser Button */}
           <button
             type="button"
             disabled
-            className="h-11 rounded-xl border border-border bg-surface-inset px-4 text-sm text-muted/60 flex items-center gap-2 cursor-not-allowed select-none font-bold"
+            className="px-3 py-2 text-xs font-medium text-slate-400 select-none cursor-not-allowed flex items-center gap-1.5 shrink-0"
           >
-            <span>Customize</span>
-            <span className="rounded-md bg-muted/15 px-1.5 py-0.5 text-[9px] font-bold text-muted">
+            <span>⚙️ Customize</span>
+            <span className="rounded bg-accent-soft text-accent border border-accent/20 px-1.5 py-0.5 text-[9px] font-semibold">
               Coming Soon
             </span>
           </button>
         </div>
+
 
         {/* Error Alerts */}
         {exportError ? (

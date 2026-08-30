@@ -1,21 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Plus, Upload, FilePlus, Search, ShieldAlert, FileText, CheckCircle2 } from "lucide-react";
 
-import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { ContractUpload } from "@/components/dashboard/ContractUpload";
 import { DocumentList } from "@/components/dashboard/DocumentList";
+import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { createClient } from "@/lib/supabase/server";
-import type {
-  AnalysisRow,
-  ClauseRow,
-  DetailedAnalysis,
-  FindingRow,
-  FindingWithClause,
-  KeyTermRow,
-  KeyTermWithClause,
-  ObligationRow,
-  ObligationWithClause,
-} from "@/types/analysis";
+
+import type { DetailedAnalysis } from "@/types/analysis";
 import type { Document } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -30,103 +22,42 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Fetch user documents
-  const { data: documents, error: documentsError } = await supabase
-    .from("documents")
-    .select("*")
-    .order("created_at", { ascending: false });
+  // Fetch user documents and analyses summary in parallel
+  const [
+    { data: documents, error: documentsError },
+    { data: analyses },
+  ] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("analyses")
+      .select("id, document_id, risk_score, summary, created_at, model")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  // Fetch analyses and related child records
+  // Build lightweight analyses summary map for instant rendering
   const analysesMap: Record<string, DetailedAnalysis> = {};
 
-  if (documents && documents.length > 0) {
-    const documentIds = documents.map((d: Document) => d.id);
-
-    const [
-      { data: analyses },
-      { data: clauses },
-      { data: findings },
-      { data: keyTerms },
-      { data: obligations },
-    ] = await Promise.all([
-      supabase
-        .from("analyses")
-        .select("*")
-        .in("document_id", documentIds)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("clauses")
-        .select("*")
-        .in("document_id", documentIds)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("findings")
-        .select("*")
-        .in("document_id", documentIds)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("key_terms")
-        .select("*")
-        .in("document_id", documentIds)
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("obligations")
-        .select("*")
-        .in("document_id", documentIds)
-        .order("created_at", { ascending: true }),
-    ]);
-
-    if (analyses && analyses.length > 0) {
-      const clauseMap = new Map<string, ClauseRow>();
-      ((clauses as ClauseRow[]) ?? []).forEach((c) => clauseMap.set(c.id, c));
-
-      const seenDocIds = new Set<string>();
-      for (const analysis of analyses as AnalysisRow[]) {
-        if (seenDocIds.has(analysis.document_id)) continue;
-        seenDocIds.add(analysis.document_id);
-
-        const docClauses = ((clauses as ClauseRow[]) ?? []).filter(
-          (c) => c.document_id === analysis.document_id,
-        );
-
-        const docFindings: FindingWithClause[] = (
-          (findings as FindingRow[]) ?? []
-        )
-          .filter((f) => f.document_id === analysis.document_id)
-          .map((f) => ({
-            ...f,
-            clause: f.clause_id ? clauseMap.get(f.clause_id) ?? null : null,
-          }));
-
-        const docKeyTerms: KeyTermWithClause[] = (
-          (keyTerms as KeyTermRow[]) ?? []
-        )
-          .filter((kt) => kt.document_id === analysis.document_id)
-          .map((kt) => ({
-            ...kt,
-            clause: kt.source_clause_id
-              ? clauseMap.get(kt.source_clause_id) ?? null
-              : null,
-          }));
-
-        const docObligations: ObligationWithClause[] = (
-          (obligations as ObligationRow[]) ?? []
-        )
-          .filter((o) => o.document_id === analysis.document_id)
-          .map((o) => ({
-            ...o,
-            clause: o.source_clause_id
-              ? clauseMap.get(o.source_clause_id) ?? null
-              : null,
-          }));
-
+  if (analyses && analyses.length > 0) {
+    for (const analysis of analyses) {
+      if (!analysesMap[analysis.document_id]) {
         analysesMap[analysis.document_id] = {
-          ...analysis,
-          clauses: docClauses,
-          findings: docFindings,
-          key_terms: docKeyTerms,
-          obligations: docObligations,
+          id: analysis.id,
+          document_id: analysis.document_id,
+          user_id: user.id,
+          risk_score: analysis.risk_score,
+          summary: analysis.summary,
+          result: {},
+          model: analysis.model,
+          created_at: analysis.created_at,
+          clauses: [],
+          findings: [],
+          key_terms: [],
+          obligations: [],
         };
       }
     }
@@ -139,129 +70,180 @@ export default async function DashboardPage() {
   ).length;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <DashboardNav userEmail={user.email} active="dashboard" />
-
-      {/* Main Workspace Container */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 sm:px-8 py-10 space-y-10">
-        {/* Hero Header */}
-        <div className="space-y-1.5">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-            Welcome back
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 py-8 space-y-8">
+      {/* Welcome Workspace Greeting Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#E7E5E2] pb-6">
+        <div className="space-y-1">
+          <h1 className="heading-page text-[#171717]">
+            Workspace Overview
           </h1>
-          <p className="text-base text-muted font-normal">
-            What would you like to do today?
+          <p className="text-xs sm:text-[14px] text-[#5F6368]">
+            Create customized legal agreements and audit contracts before signing.
           </p>
         </div>
 
-        {/* Primary Action Cards */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Card 1: Create a Legal Document */}
-          <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 flex flex-col justify-between card-hover shadow-xs">
-            <div className="space-y-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-accent font-bold text-xl shadow-xs">
-                📝
-              </div>
-              <h2 className="text-xl font-bold text-foreground sm:text-2xl">
-                Create a Legal Document
-              </h2>
-              <p className="text-base text-muted leading-relaxed">
-                Answer a few simple questions and create your agreement in minutes.
-              </p>
-            </div>
-            <div>
-              <Link
-                href="/dashboard/create"
-                className="inline-flex items-center gap-1.5 text-base font-bold text-white bg-accent hover:bg-accent-hover px-5 py-2.5 rounded-xl transition-all shadow-xs"
-              >
-                Create document →
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 2: Analyze a Contract */}
-          <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 flex flex-col justify-between card-hover shadow-xs">
-            <div className="space-y-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 font-bold text-xl shadow-xs">
-                🔍
-              </div>
-              <h2 className="text-xl font-bold text-foreground sm:text-2xl">
-                Analyze a Contract
-              </h2>
-              <p className="text-base text-muted leading-relaxed">
-                Upload an existing contract and understand what needs attention before signing.
-              </p>
-            </div>
-            <div>
-              <a
-                href="#upload"
-                className="inline-flex items-center gap-1.5 text-base font-bold text-accent border border-accent/30 bg-accent/5 hover:bg-accent/10 px-5 py-2.5 rounded-xl transition-all"
-              >
-                Analyze document →
-              </a>
-            </div>
-          </div>
+        {/* Quick Primary Actions Toolbar */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Link
+            href="/dashboard/create"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#262626] transition-all shadow-xs active:scale-98"
+          >
+            <Plus className="w-3.5 h-3.5 text-[#059669]" />
+            <span>Create document</span>
+          </Link>
+          <Link
+            href="#upload"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E7E5E2] bg-white px-4 py-2 text-xs font-medium text-[#171717] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] transition-all shadow-2xs active:scale-98"
+          >
+            <Upload className="w-3.5 h-3.5 text-[#5F6368]" />
+            <span>Analyze contract</span>
+          </Link>
         </div>
+      </div>
 
-        {/* Workspace Metrics Summary */}
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3">
-          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted">
+      {/* Primary Action Cards Grid with SpotlightCard Effect */}
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* Card 1: Create a Legal Document */}
+        <SpotlightCard
+          spotlightColor="rgba(5, 150, 105, 0.08)"
+          className="rounded-2xl border-[#E7E5E2] bg-white p-6 space-y-4 shadow-xs"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669] border border-[#059669]/20 shadow-2xs">
+              <FilePlus className="w-5 h-5" />
+            </div>
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8A8F98]">
+              Guided Generator
+            </span>
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-[#171717]">
+              Create a Legal Document
+            </h2>
+            <p className="text-xs sm:text-[13px] text-[#5F6368] leading-relaxed">
+              Answer simple guided questions to generate customized, legally sound freelance and service agreements with plain English summaries.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="/dashboard/create"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#059669] hover:underline"
+            >
+              <span>Start creating document</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </SpotlightCard>
+
+        {/* Card 2: Analyze an Existing Contract */}
+        <SpotlightCard
+          spotlightColor="rgba(5, 150, 105, 0.08)"
+          className="rounded-2xl border-[#E7E5E2] bg-white p-6 space-y-4 shadow-xs"
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F7F7F5] text-[#171717] border border-[#E7E5E2] shadow-2xs">
+              <Search className="w-5 h-5 text-[#059669]" />
+            </div>
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8A8F98]">
+              Pre-Sign Audit
+            </span>
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-[#171717]">
+              Analyze Existing Contract
+            </h2>
+            <p className="text-xs sm:text-[13px] text-[#5F6368] leading-relaxed">
+              Upload a PDF or DOCX file to spot high-risk liability traps, evaluate milestone fairness, and review plain English clause explanations.
+            </p>
+          </div>
+          <div className="pt-2">
+            <Link
+              href="#upload"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#059669] hover:underline"
+            >
+              <span>Upload file for analysis</span>
+              <span>↓</span>
+            </Link>
+          </div>
+        </SpotlightCard>
+      </div>
+
+      {/* Workspace Metrics Summary Bar */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border border-[#E7E5E2] bg-white p-5 card-hover shadow-2xs">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8A8F98]">
               Total Contracts
             </p>
-            <p className="mt-2 text-3xl font-extrabold text-foreground">
-              {totalCount}
-            </p>
+            <FileText className="w-4 h-4 text-[#8A8F98]" />
           </div>
-          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted">
-              Analyzed Documents
-            </p>
-            <p className="mt-2 text-3xl font-extrabold text-accent">
-              {analyzedCount}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-border bg-surface p-6 shadow-xs card-hover col-span-2 sm:col-span-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted">
-              Needs Attention
-            </p>
-            <p className="mt-2 text-3xl font-extrabold text-amber-600">
-              {attentionCount}
-            </p>
-          </div>
+          <p className="mt-2 text-2xl font-bold text-[#171717]">
+            {totalCount}
+          </p>
         </div>
 
-        {/* Contract Upload Section */}
-        <section id="upload" className="space-y-3">
-          <ContractUpload />
-        </section>
-
-        {/* Recent Documents Table */}
-        <section className="rounded-2xl border border-border bg-surface p-8 space-y-6 shadow-xs card-hover">
-          <div className="flex items-center justify-between border-b border-border pb-5">
-            <div>
-              <h2 className="text-xl font-bold text-foreground">
-                Recent Documents
-              </h2>
-              <p className="text-base text-muted">
-                View stored agreements and access deep-dive contract reviews.
-              </p>
-            </div>
-            {documents && documents.length > 0 && (
-              <span className="rounded-full bg-accent/10 border border-accent/20 px-3.5 py-1 text-xs font-bold text-accent">
-                {documents.length} Total
-              </span>
-            )}
+        <div className="rounded-xl border border-[#E7E5E2] bg-white p-5 card-hover shadow-2xs">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8A8F98]">
+              Audited Documents
+            </p>
+            <CheckCircle2 className="w-4 h-4 text-[#059669]" />
           </div>
+          <p className="mt-2 text-2xl font-bold text-[#059669]">
+            {analyzedCount}
+          </p>
+        </div>
 
-          <DocumentList
-            documents={documents as Document[] | null}
-            error={documentsError?.message}
-            analysesMap={analysesMap}
-          />
-        </section>
-      </main>
-    </div>
+        <div className="rounded-xl border border-[#E7E5E2] bg-white p-5 card-hover shadow-2xs col-span-2 sm:col-span-1">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#8A8F98]">
+              Needs Attention
+            </p>
+            <ShieldAlert className="w-4 h-4 text-[#B45309]" />
+          </div>
+          <p className="mt-2 text-2xl font-bold text-[#B45309]">
+            {attentionCount}
+          </p>
+        </div>
+      </div>
+
+      {/* Contract Upload Section */}
+      <section id="upload" className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="heading-section text-[#171717]">
+            Contract Analysis Dropzone
+          </h2>
+          <p className="text-xs sm:text-[13px] text-[#5F6368]">
+            Upload agreements up to 10MB to detect risks, obligations, and key dates.
+          </p>
+        </div>
+        <ContractUpload />
+      </section>
+
+      {/* Recent Documents Table Container */}
+      <section id="documents" className="rounded-2xl border border-[#E7E5E2] bg-white p-6 sm:p-7 space-y-5 shadow-sm">
+        <div className="flex items-center justify-between border-b border-[#E7E5E2] pb-4">
+          <div>
+            <h2 className="heading-section text-[#171717]">
+              Recent Documents
+            </h2>
+            <p className="text-xs text-[#5F6368]">
+              Manage saved agreements and access deep-dive contract audit workspaces.
+            </p>
+          </div>
+          {documents && documents.length > 0 && (
+            <span className="rounded-md bg-[#059669]/10 border border-[#059669]/20 px-2.5 py-0.5 text-xs font-semibold text-[#059669]">
+              {documents.length} Total
+            </span>
+          )}
+        </div>
+
+        <DocumentList
+          documents={documents as Document[] | null}
+          error={documentsError?.message}
+          analysesMap={analysesMap}
+        />
+      </section>
+    </main>
   );
 }

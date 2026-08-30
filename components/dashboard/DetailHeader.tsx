@@ -30,11 +30,12 @@ export function DetailHeader({
   const { label: riskLabel, level: riskLevel } = getRiskLabel(analysis.risk_score);
 
   const riskBadgeStyles: Record<string, string> = {
-    informational: "bg-blue-50 text-blue-700 border-blue-200",
-    low: "bg-green-50 text-green-700 border-green-200",
-    medium: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    high: "bg-orange-50 text-orange-700 border-orange-200",
+    informational: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    low: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    medium: "bg-amber-50 text-amber-700 border-amber-200",
+    high: "bg-rose-50 text-rose-700 border-rose-200",
   };
+
 
   const handleGenerateReport = () => {
     setReportError(null);
@@ -134,11 +135,9 @@ export function DetailHeader({
             <span className={`inline-flex items-center rounded-full border px-3 py-0.5 text-xs font-semibold ${riskBadgeStyles[riskLevel] ?? riskBadgeStyles.low}`}>
               {riskLabel}
             </span>
-            {analysis.model && (
-              <span className="rounded bg-border px-2 py-0.5 font-mono text-xs text-muted">
-                {analysis.model}
-              </span>
-            )}
+            <span className="rounded bg-[#059669]/10 border border-[#059669]/20 px-2 py-0.5 text-xs font-medium text-[#059669]">
+              Commercial Contract Audit
+            </span>
           </div>
 
           <h1 className="text-2xl font-bold text-foreground md:text-3xl">

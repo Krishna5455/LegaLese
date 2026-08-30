@@ -73,11 +73,9 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
             AI Contract Analysis
           </span>
           <RiskScoreBadge riskScore={analysis.risk_score} />
-          {analysis.model && (
-            <span className="text-xs font-mono bg-border px-2 py-0.5 rounded text-muted">
-              {analysis.model}
-            </span>
-          )}
+          <span className="text-xs font-medium bg-[#059669]/10 text-[#059669] border border-[#059669]/20 px-2 py-0.5 rounded">
+            Commercial Contract Audit
+          </span>
           {analysis.created_at && (
             <span className="ml-auto text-xs text-muted">
               {formatDate(analysis.created_at)}

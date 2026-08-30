@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { SignOutButton } from "@/components/auth/SignOutButton";
 import { ContractDetailWorkspace } from "@/components/dashboard/ContractDetailWorkspace";
 import { DetailHeader } from "@/components/dashboard/DetailHeader";
+
 import { getAnalysis } from "@/lib/actions/analyses";
 import { getReport } from "@/lib/actions/reports";
 import { createClient } from "@/lib/supabase/server";
@@ -40,38 +40,27 @@ export default async function DocumentDetailPage({
   // Document Not Found or Unauthorized Access
   if (docError || !document) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b border-border bg-surface/80 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-            <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">
-              LegaLese
-            </Link>
-            <SignOutButton />
-          </div>
-        </header>
-
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-          <div className="rounded-full bg-red-50 p-4 text-red-600 mb-4">
-            <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Document Not Found</h1>
-          <p className="mt-2 text-sm text-muted">
-            The document you requested does not exist or you do not have permission to view it.
-          </p>
-          <Link
-            href="/dashboard"
-            className="mt-6 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover transition-colors"
-          >
-            Return to Dashboard
-          </Link>
-        </main>
-      </div>
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+        <div className="rounded-full bg-red-50 p-4 text-red-600 mb-4">
+          <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">Document Not Found</h1>
+        <p className="mt-2 text-sm text-muted">
+          The document you requested does not exist or you do not have permission to view it.
+        </p>
+        <Link
+          href="/dashboard"
+          className="mt-6 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover transition-colors"
+        >
+          Return to Dashboard
+        </Link>
+      </main>
     );
   }
 
-  // Fetch analysis and report data
+  // Fetch analysis and report data in parallel
   const [{ analysis }, { report }] = await Promise.all([
     getAnalysis(documentId),
     getReport(documentId),
@@ -81,72 +70,58 @@ export default async function DocumentDetailPage({
   const status = (docTyped.status || "").toLowerCase();
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* App Header */}
-      <header className="border-b border-border bg-surface/80 backdrop-blur-sm print:hidden">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-foreground">
-            LegaLese
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-xs font-medium text-muted hover:text-foreground">
-              Dashboard
-            </Link>
-            <SignOutButton />
-          </div>
-        </div>
-      </header>
-
-      {/* Main Workspace */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
-        {!analysis ? (
-          <div className="space-y-6">
-            <DetailHeader document={docTyped} analysis={{
+    <main className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 py-8">
+      {!analysis ? (
+        <div className="space-y-6">
+          <DetailHeader
+            document={docTyped}
+            analysis={{
               id: "",
               document_id: documentId,
               user_id: user.id,
               risk_score: null,
               summary: "No analysis generated yet for this document.",
               result: {},
-              model: "gemini-3.6-flash",
+              model: "Verified Commercial Analysis",
               created_at: new Date().toISOString(),
               clauses: [],
               findings: [],
               key_terms: [],
               obligations: [],
-            }} initialReport={report} />
+            }}
+            initialReport={report}
+          />
 
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 py-16 text-center">
-              <h2 className="text-lg font-semibold text-foreground">
-                No Analysis Available Yet
-              </h2>
-              <p className="mt-1 max-w-md text-xs text-muted">
-                {status === "complete"
-                  ? "This document has completed text extraction. Trigger AI analysis from the dashboard or click back."
-                  : status === "processing"
-                    ? "Document text extraction is currently processing. Please refresh in a moment."
-                    : "Document text extraction has not completed."}
-              </p>
-              <Link
-                href="/dashboard"
-                className="mt-6 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover transition-colors"
-              >
-                Go to Dashboard to Analyze
-              </Link>
-            </div>
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface px-6 py-16 text-center shadow-xs">
+            <h2 className="text-lg font-bold text-foreground">
+              No Analysis Available Yet
+            </h2>
+            <p className="mt-1 max-w-md text-xs text-secondary">
+              {status === "complete"
+                ? "This document has completed text extraction. Trigger AI analysis from the dashboard."
+                : status === "processing"
+                  ? "Document text extraction is currently processing. Please refresh in a moment."
+                  : "Document text extraction has not completed."}
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-5 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover transition-colors shadow-xs"
+            >
+              Go to Dashboard to Analyze
+            </Link>
           </div>
-        ) : (
-          <div className="space-y-8">
-            <DetailHeader
-              document={docTyped}
-              analysis={analysis}
-              initialReport={report}
-            />
+        </div>
+      ) : (
+        <div className="space-y-6">
+          <DetailHeader
+            document={docTyped}
+            analysis={analysis}
+            initialReport={report}
+          />
 
-            <ContractDetailWorkspace analysis={analysis} />
-          </div>
-        )}
-      </main>
-    </div>
+          <ContractDetailWorkspace analysis={analysis} />
+        </div>
+      )}
+    </main>
   );
 }
