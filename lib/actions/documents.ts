@@ -61,8 +61,9 @@ export async function uploadDocument(
       });
 
     if (storageError) {
+      console.error("[LegaLese/uploadDocument] Storage upload error:", storageError);
       return {
-        error: `Failed to upload file to storage: ${storageError.message}`,
+        error: "We could not upload your file to storage. Please check your network connection and try again.",
       };
     }
 
@@ -92,8 +93,9 @@ export async function uploadDocument(
         );
       }
 
+      console.error("[LegaLese/uploadDocument] Database insert error:", dbError);
       return {
-        error: `Failed to record document in database: ${dbError.message}`,
+        error: "We could not record your document metadata. Please try again.",
       };
     }
 
@@ -239,9 +241,10 @@ async function processDocumentInternal(
       buffer: fileBuffer,
     });
 
-    // 3. Upload extracted JSON artifact to private 'contracts' storage bucket
-    const artifactPath = `${doc.storage_path}.extracted.json`;
-    const artifactBuffer = Buffer.from(JSON.stringify(processedDoc, null, 2));
+    // 3. Upload extracted JSON text artifact to private 'contracts' storage bucket
+    // Note: The bucket permits text/plain, so we save the extracted text artifact with .txt extension
+    const artifactPath = `${doc.storage_path}.extracted.txt`;
+    const artifactBuffer = Buffer.from(JSON.stringify(processedDoc, null, 2), "utf-8");
 
     const { error: artifactUploadErr } = await supabase.storage
       .from("contracts")
@@ -251,8 +254,8 @@ async function processDocumentInternal(
       });
 
     if (artifactUploadErr) {
-      throw new Error(
-        `Failed to store extracted text artifact: ${artifactUploadErr.message}`,
+      console.warn(
+        `[LegaLese/processDocumentInternal] Artifact storage notice for ${doc.id}: ${artifactUploadErr.message}`,
       );
     }
 

@@ -22,7 +22,8 @@ export async function exportDocx(
 ): Promise<Buffer> {
   const children: (Paragraph | Table)[] = [];
 
-  const sanitizeText = (text: string): string => {
+  const sanitizeText = (text?: string | null): string => {
+    if (!text || typeof text !== "string") return "";
     return text
       .replace(/^#+\s*/gm, "")
       .replace(/\*\*(.*?)\*\*/g, "$1")
@@ -178,8 +179,10 @@ export async function exportDocx(
 
   for (let index = 0; index < sortedSections.length; index++) {
     const section = sortedSections[index];
-    const cleanTitle = sanitizeText(section.title).toUpperCase();
-    const cleanContent = sanitizeText(section.content);
+    const sectionNum = index + 1;
+    const cleanTitle = sanitizeText(section.title || `Section ${sectionNum}`).toUpperCase();
+    const sectionBody = section.content || (section as unknown as { body?: string }).body || "";
+    const cleanContent = sanitizeText(sectionBody);
 
     // Section Heading
     children.push(

@@ -42,9 +42,10 @@ export async function explainGeneratedDocumentAction(
       modelUsed,
     };
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to analyze document.";
-    console.error("[LegaLese/ExplainAction] Error:", message);
-    return { error: message };
+    console.error("[LegaLese/ExplainAction] Technical error:", err);
+    return {
+      error:
+        "We could not generate the plain-language explanation right now. Please try again in a moment.",
+    };
   }
 }

@@ -1,8 +1,8 @@
-﻿import "server-only";
+import "server-only";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { getGeminiConfig } from "@/lib/ai/config";
+import { GEMINI_GENERATION_TIMEOUT_MS, getGeminiConfig } from "@/lib/ai/config";
 import { buildSystemInstruction, buildUserMessage } from "@/lib/ai/prompt";
 import { prepareContractText } from "@/lib/ai/prompt";
 import { AIAnalysisOutputSchema } from "@/lib/ai/schema";
@@ -32,7 +32,7 @@ export async function analyzeContractWithGemini(
 
   const userMessage = buildUserMessage(doc, contractText);
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30_000);
+  const timeoutId = setTimeout(() => controller.abort(), GEMINI_GENERATION_TIMEOUT_MS);
 
   let rawResponseText: string;
 
@@ -53,11 +53,13 @@ export async function analyzeContractWithGemini(
       (err.name === "AbortError" || err.message.includes("aborted"));
     if (isTimeout) {
       throw new Error(
-        "AI analysis timed out after 30 seconds. Please try again.",
+        "Contract analysis timed out. Please try again.",
       );
     }
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Gemini API error: ${msg}`);
+    console.error("[LegaLese/AI] Gemini API error:", err);
+    throw new Error(
+      "AI contract analysis is temporarily unavailable. Please try again in a few moments.",
+    );
   }
 
   let parsed: unknown;

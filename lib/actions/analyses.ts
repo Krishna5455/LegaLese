@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { analyzeContractWithGemini } from "@/lib/ai/gemini";
 import { computeRiskScore } from "@/lib/ai/scorer";
+import { processDocumentBuffer } from "@/lib/documents/processor";
 import { createClient } from "@/lib/supabase/server";
 import type {
   AIClause,
@@ -109,28 +110,82 @@ export async function analyzeDocument(
   }
 
   try {
-    // 3. Download extracted JSON artifact from Storage
+    // 3. Download extracted artifact from Storage
     if (!doc.storage_path) {
       throw new Error("Document storage path is missing.");
     }
 
-    const artifactPath = `${doc.storage_path}.extracted.json`;
-    const { data: artifactBlob, error: downloadError } = await supabase.storage
-      .from("contracts")
-      .download(artifactPath);
+    let processedDoc: ProcessedDocument | null = null;
+    const txtArtifactPath = `${doc.storage_path}.extracted.txt`;
+    const jsonArtifactPath = `${doc.storage_path}.extracted.json`;
 
-    if (downloadError || !artifactBlob) {
-      throw new Error(
-        "Extracted text artifact not found in storage. Please retry processing.",
-      );
+    // Attempt to load .extracted.txt first (standard storage MIME format)
+    const { data: txtBlob } = await supabase.storage
+      .from("contracts")
+      .download(txtArtifactPath);
+
+    if (txtBlob) {
+      try {
+        const text = await txtBlob.text();
+        processedDoc = JSON.parse(text) as ProcessedDocument;
+      } catch (err) {
+        console.warn("[LegaLese/analyzeDocument] Could not parse .txt artifact:", err);
+      }
     }
 
-    const artifactText = await artifactBlob.text();
-    let processedDoc: ProcessedDocument;
-    try {
-      processedDoc = JSON.parse(artifactText) as ProcessedDocument;
-    } catch {
-      throw new Error("Extracted document artifact is unreadable.");
+    // Fall back to legacy .extracted.json if .txt was not found
+    if (!processedDoc) {
+      const { data: jsonBlob } = await supabase.storage
+        .from("contracts")
+        .download(jsonArtifactPath);
+
+      if (jsonBlob) {
+        try {
+          const text = await jsonBlob.text();
+          processedDoc = JSON.parse(text) as ProcessedDocument;
+        } catch (err) {
+          console.warn("[LegaLese/analyzeDocument] Could not parse .json artifact:", err);
+        }
+      }
+    }
+
+    // Self-Healing Fallback: If neither artifact exists, download the original document and extract text on-the-fly
+    if (!processedDoc) {
+      console.log(
+        `[LegaLese/analyzeDocument] Artifact not found for doc ${documentId}. Self-healing: extracting directly from original file...`,
+      );
+
+      const { data: originalBlob, error: origError } = await supabase.storage
+        .from("contracts")
+        .download(doc.storage_path);
+
+      if (origError || !originalBlob) {
+        console.error("[LegaLese/analyzeDocument] Original file missing from storage:", origError);
+        throw new Error(
+          "We could not locate the original document file in storage. Please re-upload your contract.",
+        );
+      }
+
+      const fileBuffer = Buffer.from(await originalBlob.arrayBuffer());
+      processedDoc = await processDocumentBuffer({
+        documentId: doc.id,
+        filename: doc.filename,
+        documentType: doc.document_type,
+        buffer: fileBuffer,
+      });
+
+      // Cache the extracted artifact as .extracted.txt for future fast retrieval
+      try {
+        const artifactBuffer = Buffer.from(JSON.stringify(processedDoc, null, 2), "utf-8");
+        await supabase.storage
+          .from("contracts")
+          .upload(txtArtifactPath, artifactBuffer, {
+            contentType: "text/plain",
+            upsert: true,
+          });
+      } catch (cacheErr) {
+        console.warn("[LegaLese/analyzeDocument] Could not cache self-healed artifact:", cacheErr);
+      }
     }
 
     const wordCount = processedDoc.fullText
@@ -139,7 +194,7 @@ export async function analyzeDocument(
 
     if (wordCount < 10) {
       throw new Error(
-        "Document text content is insufficient for AI analysis (fewer than 10 words). Please upload a valid readable contract.",
+        "Document text content is insufficient for AI analysis (fewer than 10 words). Please upload a readable contract.",
       );
     }
 
@@ -278,10 +333,22 @@ export async function analyzeDocument(
       analysis: fullAnalysis ?? undefined,
     };
   } catch (err) {
-    const errorMessage =
+    const rawMessage =
       err instanceof Error ? err.message : "An unexpected error occurred during analysis.";
-    console.error("[LegaLese/analyzeDocument] Error:", errorMessage);
-    return { error: errorMessage };
+    console.error("[LegaLese/analyzeDocument] Technical error:", err);
+
+    const isOperational =
+      rawMessage.includes("fewer than 10 words") ||
+      rawMessage.includes("Scanned PDF") ||
+      rawMessage.includes("Password-protected") ||
+      rawMessage.includes("insufficient text") ||
+      rawMessage.includes("re-upload your contract");
+
+    const clientMessage = isOperational
+      ? rawMessage
+      : "We could not complete the contract analysis right now. Please try again in a moment.";
+
+    return { error: clientMessage };
   }
 }
 

@@ -38,7 +38,9 @@ export async function extractTextFromPdf(
     // Scanned / Image-Only PDF Detection (< 10 words)
     const wordCount = fullText.trim() ? fullText.trim().split(/\s+/).filter(Boolean).length : 0;
     if (wordCount < 10) {
-      throw new Error("Scanned PDF detected. Please upload a digital PDF, DOCX, or TXT file.");
+      throw new Error(
+        "Scanned PDF detected. This document appears to be an image-only scan without selectable text. Please upload a readable digital PDF or DOCX file.",
+      );
     }
 
     return {
@@ -51,15 +53,18 @@ export async function extractTextFromPdf(
 
     // Password-Protected / Encrypted PDF Detection
     if (/password|encrypt|decrypt|protected/i.test(msg)) {
-      throw new Error("Password-protected PDF detected. Please unlock the PDF and upload it again.");
+      throw new Error("Password-protected PDF detected. Please remove password protection and try again.");
     }
 
-    // Preserve custom scanned PDF error or format user-friendly message
+    // Preserve custom scanned PDF error
     if (msg.includes("Scanned PDF detected")) {
       throw new Error(msg);
     }
 
-    throw new Error(`Failed to parse PDF document: ${msg}`);
+    console.error("[LegaLese/extractTextFromPdf] Parser error:", error);
+    throw new Error(
+      "Unable to read this document. The PDF appears to be corrupted or invalid. Please check the file and try again.",
+    );
   }
 }
 

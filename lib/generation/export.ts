@@ -35,13 +35,16 @@ export function generatedDocumentToMarkdown(
 
   lines.push("");
 
-  const sortedSections = [...content.sections].sort((a, b) => a.order - b.order);
+  const sortedSections = [...(content.sections ?? [])].sort((a, b) => a.order - b.order);
 
   for (const section of sortedSections) {
-    lines.push(`## ${section.title}`, "", section.content, "", "---", "");
+    const text = section.content || (section as unknown as { body?: string }).body || "";
+    lines.push(`## ${section.title || "Section"}`, "", text, "", "---", "");
   }
 
-  lines.push("## Disclaimer", "", content.disclaimer, "");
+  if (content.disclaimer) {
+    lines.push("## Disclaimer", "", content.disclaimer, "");
+  }
 
   return lines.join("\n");
 }

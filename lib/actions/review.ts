@@ -42,9 +42,10 @@ export async function reviewGeneratedDocumentAction(
       modelUsed,
     };
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to review document.";
-    console.error("[LegaLese/ReviewAction] Error:", message);
-    return { error: message };
+    console.error("[LegaLese/ReviewAction] Technical error:", err);
+    return {
+      error:
+        "We could not generate the contract review right now. Please try again in a moment.",
+    };
   }
 }

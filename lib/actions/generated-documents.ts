@@ -253,12 +253,20 @@ export async function exportGeneratedDocument(
       isBase64: false,
     };
   } catch (err) {
-    const errorMessage =
+    const rawErrorMessage =
       err instanceof Error ? err.message : "An unexpected export error occurred.";
     console.error(
-      `[LegaLese/ExportAction] Export exception | format: ${format} | error: ${errorMessage}`,
+      `[LegaLese/ExportAction] Export exception | format: ${format} | error:`,
+      err,
     );
-    return { error: `Failed to generate ${format.toUpperCase()} export: ${errorMessage}` };
+    const userMessage =
+      !rawErrorMessage.includes("ENOENT") &&
+      !rawErrorMessage.includes("at ") &&
+      !rawErrorMessage.includes("node:") &&
+      !rawErrorMessage.includes("SyntaxError")
+        ? `We couldn't generate the ${format.toUpperCase()} file right now. Please try again.`
+        : `We couldn't generate the ${format.toUpperCase()} file right now. Please try again.`;
+    return { error: userMessage };
   }
 }
 

@@ -59,8 +59,8 @@ export async function generateFreelanceAgreementWithGemini(
         "Document generation timed out. Please try again.",
       );
     }
-    const msg = err instanceof Error ? err.message : String(err);
-    throw new Error(`Document generation failed: ${msg}`);
+    console.error("[LegaLese/Generation] Gemini API error:", err);
+    throw new Error("Agreement generation is temporarily unavailable. Please try again in a few moments.");
   }
 
   let parsed: unknown;
