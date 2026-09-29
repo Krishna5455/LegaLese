@@ -80,9 +80,26 @@ export function LandingHero() {
 
   return (
     <section
-      ref={heroRef}
-      className="relative pt-28 pb-16 overflow-hidden bg-[#F9F9F8] border-b border-[#E5E5E3]"
-    >
+  ref={heroRef}
+  className="relative pt-28 pb-16 overflow-hidden bg-[#F5F7F2] border-b border-[#DDE5DF]"
+>
+  {/* Animated background glow */}
+  <div
+    className="pointer-events-none absolute -top-32 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-emerald-400/10 blur-3xl animate-pulse-glow"
+    aria-hidden="true"
+  />
+
+  {/* Secondary glow */}
+  <div
+    className="pointer-events-none absolute top-40 -left-32 h-[300px] w-[300px] rounded-full bg-emerald-300/10 blur-3xl animate-float-slow"
+    aria-hidden="true"
+  />
+
+  {/* Small premium gold accent */}
+  <div
+    className="pointer-events-none absolute top-24 right-10 h-24 w-24 rounded-full bg-[#D4A72C]/10 blur-2xl animate-float-delayed"
+    aria-hidden="true"
+  />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center space-y-6">
 
         {/* Category Pill */}

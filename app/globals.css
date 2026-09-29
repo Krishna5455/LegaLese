@@ -1,23 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F7F7F5;
+  /* Main surfaces */
+  --background: #F5F7F2;
   --surface: #FFFFFF;
-  --surface-subtle: #F0EFEA;
-  --foreground: #171717;
-  --secondary: #5F6368;
-  --muted: #8A8F98;
-  --border: #E7E5E2;
-  --border-strong: #D4D2CD;
-  --primary-brand: #171717;
-  --primary-hover: #262626;
-  --primary-soft: #F0EFEA;
-  --accent: #059669;
-  --accent-hover: #047857;
-  --accent-soft: rgba(5, 150, 105, 0.08);
-  --success: #166534;
+  --surface-subtle: #EAF1EC;
+
+  /* Typography */
+  --foreground: #17201B;
+  --secondary: #52605A;
+  --muted: #78857F;
+
+  /* Borders */
+  --border: #DDE5DF;
+  --border-strong: #C5D2CA;
+
+  /* Primary dark green */
+  --primary-brand: #064E3B;
+  --primary-hover: #053F30;
+  --primary-soft: #E5F1EC;
+
+  /* Emerald accent */
+  --accent: #10B981;
+  --accent-hover: #059669;
+  --accent-soft: rgba(16, 185, 129, 0.10);
+
+  /* Status colors */
+  --success: #047857;
   --warning: #B45309;
   --danger: #B91C1C;
+
+  /* Premium legal-tech gold */
+  --gold: #D4A72C;
+  --gold-soft: rgba(212, 167, 44, 0.12);
+
+  /* Dark section */
+  --dark-section: #052E24;
+  --dark-section-soft: #064E3B;
 }
 
 @theme inline {
