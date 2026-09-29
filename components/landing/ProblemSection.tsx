@@ -1,19 +1,22 @@
+"use client";
+
 import { AlertTriangle, Clock, FileQuestion } from "lucide-react";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 
 export function ProblemSection() {
   return (
     <section className="py-20 bg-white border-b border-[#E5E5E3]">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 space-y-12">
-        <div className="text-center space-y-3 max-w-2xl mx-auto">
+        <ScrollReveal className="text-center space-y-3 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#111827]">
             Why standard legal tools fail businesses
           </h2>
           <p className="text-sm text-[#4B5563]">
             Traditional legal software either generates a static template or acts as a dumb PDF archive. Neither solves the actual journey.
           </p>
-        </div>
+        </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ScrollReveal className="grid grid-cols-1 md:grid-cols-3 gap-6" delay={0.15}>
           <div className="p-6 rounded-2xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-3">
             <div className="p-2.5 rounded-xl bg-amber-50 text-amber-700 w-fit">
               <AlertTriangle className="w-5 h-5" />
@@ -43,7 +46,7 @@ export function ProblemSection() {
               Once signed, milestone payments, renewal notice windows, and deliverable deadlines disappear into forgotten folders.
             </p>
           </div>
-        </div>
+        </ScrollReveal>
       </div>
     </section>
   );
