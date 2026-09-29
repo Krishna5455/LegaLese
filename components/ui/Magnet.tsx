@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, MouseEvent } from "react";
+import React, { useRef, type MouseEvent } from "react";
 
 interface MagnetProps {
   children: React.ReactNode;
@@ -9,7 +9,6 @@ interface MagnetProps {
 }
 
 export function Magnet({ children, className = "", strength = 0.25 }: MagnetProps) {
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
@@ -19,11 +18,13 @@ export function Magnet({ children, className = "", strength = 0.25 }: MagnetProp
     const centerY = top + height / 2;
     const deltaX = (e.clientX - centerX) * strength;
     const deltaY = (e.clientY - centerY) * strength;
-    setPosition({ x: deltaX, y: deltaY });
+    ref.current.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
   };
 
   const handleMouseLeave = () => {
-    setPosition({ x: 0, y: 0 });
+    if (ref.current) {
+      ref.current.style.transform = "translate3d(0px, 0px, 0)";
+    }
   };
 
   return (
@@ -32,9 +33,6 @@ export function Magnet({ children, className = "", strength = 0.25 }: MagnetProp
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className={`inline-block transition-transform duration-200 ease-out ${className}`}
-      style={{
-        transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
-      }}
     >
       {children}
     </div>

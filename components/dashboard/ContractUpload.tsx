@@ -167,7 +167,7 @@ export function ContractUpload() {
                 Drop your contract file here or <span className="text-[#059669] underline font-semibold">browse computer</span>
               </p>
               <p className="text-[11px] text-[#8A8F98]">
-                Supports PDF and DOCX files up to 10MB • Private & secure
+                Supports PDF, DOCX, and TXT files up to 50 MB • Private & secure
               </p>
             </div>
           </div>
@@ -207,7 +207,7 @@ export function ContractUpload() {
                 type="button"
                 onClick={handleUpload}
                 disabled={isPending}
-                className="rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#262626] transition-colors shadow-xs"
+                className="rounded-lg bg-[#171717] px-4 py-2 text-xs font-medium text-white hover:bg-[#262626] btn-interactive shadow-xs"
               >
                 {isPending ? "Uploading..." : "Upload Contract"}
               </button>
@@ -218,14 +218,14 @@ export function ContractUpload() {
 
       {/* Error Message */}
       {errorMessage ? (
-        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
+        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700 animate-fadeIn">
           {errorMessage}
         </div>
       ) : null}
 
       {/* Success Message */}
       {successMessage ? (
-        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700">
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700 animate-fadeIn">
           {successMessage}
         </div>
       ) : null}

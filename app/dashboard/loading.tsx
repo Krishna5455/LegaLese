@@ -13,58 +13,36 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* 2 Spotlight Cards Skeleton */}
-      <div className="grid gap-5 md:grid-cols-2">
-        <div className="rounded-2xl border border-[#E7E5E2] bg-white p-6 space-y-4 shadow-xs">
-          <div className="flex items-start justify-between">
-            <div className="h-10 w-10 rounded-xl bg-[#E7E5E2]" />
-            <div className="h-3.5 w-24 rounded bg-[#E7E5E2]" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-5 w-40 rounded bg-[#E7E5E2]" />
-            <div className="h-3.5 w-full rounded bg-[#E7E5E2]/70" />
-            <div className="h-3.5 w-3/4 rounded bg-[#E7E5E2]/70" />
-          </div>
-          <div className="h-4 w-28 rounded bg-[#E7E5E2]" />
-        </div>
-
-        <div className="rounded-2xl border border-[#E7E5E2] bg-white p-6 space-y-4 shadow-xs">
-          <div className="flex items-start justify-between">
-            <div className="h-10 w-10 rounded-xl bg-[#E7E5E2]" />
-            <div className="h-3.5 w-24 rounded bg-[#E7E5E2]" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-5 w-44 rounded bg-[#E7E5E2]" />
-            <div className="h-3.5 w-full rounded bg-[#E7E5E2]/70" />
-            <div className="h-3.5 w-3/4 rounded bg-[#E7E5E2]/70" />
-          </div>
-          <div className="h-4 w-28 rounded bg-[#E7E5E2]" />
-        </div>
+      {/* 1. Intent Entry Skeleton */}
+      <div className="rounded-2xl border border-[#E7E5E2] bg-white p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="h-4 w-32 rounded-full bg-[#E7E5E2]" />
+        <div className="h-7 w-64 rounded-lg bg-[#E7E5E2]" />
+        <div className="h-12 w-full rounded-xl bg-[#F7F7F5]" />
       </div>
 
-      {/* 3 Metric Cards Skeleton */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-[#E7E5E2] bg-white p-5 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="h-3 w-20 rounded bg-[#E7E5E2]" />
-              <div className="h-4 w-4 rounded bg-[#E7E5E2]" />
-            </div>
-            <div className="h-7 w-12 rounded bg-[#E7E5E2]" />
-          </div>
-        ))}
-      </div>
-
-      {/* Upload Box Skeleton */}
-      <div className="space-y-3">
-        <div className="space-y-1">
+      {/* 2. Active LegalFlow Command Center Skeleton */}
+      <div className="rounded-2xl border border-[#E7E5E2] bg-white p-6 space-y-5 shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-[#E7E5E2]">
           <div className="h-5 w-48 rounded bg-[#E7E5E2]" />
-          <div className="h-3.5 w-72 rounded bg-[#E7E5E2]/60" />
+          <div className="h-5 w-24 rounded bg-[#E7E5E2]" />
         </div>
-        <div className="h-36 rounded-xl border border-dashed border-[#E7E5E2] bg-white" />
+        <div className="h-3 w-full rounded-full bg-[#F7F7F5]" />
+        <div className="h-16 rounded-xl bg-[#F7F7F5] border border-[#E7E5E2]" />
       </div>
 
-      {/* Recent Documents Table Skeleton */}
+      {/* 3. Upcoming Obligations Skeleton */}
+      <div className="rounded-2xl border border-[#E7E5E2] bg-white p-5 sm:p-6 space-y-3 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="h-5 w-44 rounded bg-[#E7E5E2]" />
+          <div className="h-4 w-20 rounded bg-[#E7E5E2]" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div className="h-14 rounded-xl bg-[#F7F7F5] border border-[#E7E5E2]" />
+          <div className="h-14 rounded-xl bg-[#F7F7F5] border border-[#E7E5E2]" />
+        </div>
+      </div>
+
+      {/* 4. Recent Documents Skeleton */}
       <div className="rounded-2xl border border-[#E7E5E2] bg-white p-6 sm:p-7 space-y-5 shadow-sm">
         <div className="flex items-center justify-between border-b border-[#E7E5E2] pb-4">
           <div className="space-y-1">

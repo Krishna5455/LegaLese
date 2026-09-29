@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { getAnalysis } from "@/lib/actions/analyses";
 import { getRiskLabel } from "@/lib/ai/scorer";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
+import { isDemoMode, DEMO_USER } from "@/lib/demo/demo-state";
 import type { ReportRow } from "@/types/analysis";
 
 export type GenerateReportResult = {
@@ -38,13 +40,21 @@ export async function generateReport(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
+  if (!user) {
     return { error: "You must be signed in to generate reports." };
+  }
+
+  if (isDemoMode() && (documentId.startsWith("demo-") || user.id === DEMO_USER.id)) {
+    const mockReport: ReportRow = {
+      id: `report-${documentId}`,
+      document_id: documentId,
+      user_id: user.id,
+      file_path: null,
+      created_at: new Date().toISOString(),
+    };
+    return { success: true, report: mockReport };
   }
 
   // 1. Verify document ownership
@@ -243,14 +253,34 @@ export async function getReport(
     return { error: "Document ID is required." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const isDemo = isDemoMode();
+  if (isDemo && (documentId.startsWith("demo-") || documentId === "demo-doc-1" || documentId === "demo-doc-2")) {
+    const mockReport: ReportRow = {
+      id: `report-${documentId}`,
+      document_id: documentId,
+      user_id: DEMO_USER.id,
+      file_path: null,
+      created_at: new Date().toISOString(),
+    };
+    return { report: mockReport };
+  }
 
-  if (authError || !user) {
+  const supabase = await createClient();
+  const user = await getAuthenticatedUser(supabase);
+
+  if (!user) {
     return { error: "You must be signed in to view reports." };
+  }
+
+  if (isDemo && user.id === DEMO_USER.id) {
+    const mockReport: ReportRow = {
+      id: `report-${documentId}`,
+      document_id: documentId,
+      user_id: user.id,
+      file_path: null,
+      created_at: new Date().toISOString(),
+    };
+    return { report: mockReport };
   }
 
   const { data: reports, error: fetchErr } = await supabase
@@ -279,13 +309,19 @@ export async function downloadReport(
     return { error: "Document ID is required." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const isDemo = isDemoMode();
+  if (isDemo && (documentId.startsWith("demo-") || documentId === "demo-doc-1")) {
+    return {
+      success: true,
+      content: `# Contract Pre-Signing Risk Summary\n\n**Document:** Freelance Website Development Agreement\n**Risk Level:** Medium Risk\n\n### Key Findings\n- Contractor liability capped at 10% of fees.\n- Intellectual property transfers only upon final settlement.\n\n### Pre-Signing Questions\n- Should the liability cap be mutual and equal to 100% of fees?\n- Are third-party dependencies exempted from exclusive assignment?`,
+      filename: "Freelance_Website_Development_Agreement_Review_Report.md",
+    };
+  }
 
-  if (authError || !user) {
+  const supabase = await createClient();
+  const user = await getAuthenticatedUser(supabase);
+
+  if (!user) {
     return { error: "You must be signed in to download reports." };
   }
 

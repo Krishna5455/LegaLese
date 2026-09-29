@@ -11,6 +11,7 @@ import { exportPdf } from "@/lib/generation/export-pdf";
 import { exportDocx } from "@/lib/generation/export-docx";
 import { parseFreelanceAgreementInput } from "@/lib/generation/freelance-agreement-schema";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 import type {
   GeneratedDocumentContent,
   GeneratedDocumentRow,
@@ -49,12 +50,9 @@ export async function generateFreelanceAgreement(
   input: unknown,
 ): Promise<GenerateDocumentResult> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
+  if (!user) {
     return { error: "You must be signed in to create documents." };
   }
 
@@ -106,6 +104,8 @@ export async function generateFreelanceAgreement(
   }
 }
 
+import { isDemoMode, DEMO_USER, DEMO_GENERATED_DOCUMENT } from "@/lib/demo/demo-state";
+
 export async function getGeneratedDocument(
   documentId: string,
 ): Promise<GetGeneratedDocumentResult> {
@@ -113,14 +113,20 @@ export async function getGeneratedDocument(
     return { error: "Document ID is required." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const isDemo = isDemoMode();
+  if (isDemo && (documentId.startsWith("demo-") || documentId === "demo-doc-1")) {
+    return { document: DEMO_GENERATED_DOCUMENT };
+  }
 
-  if (authError || !user) {
+  const supabase = await createClient();
+  const user = await getAuthenticatedUser(supabase);
+
+  if (!user) {
     return { error: "You must be signed in to view documents." };
+  }
+
+  if (isDemo && user.id === DEMO_USER.id) {
+    return { document: DEMO_GENERATED_DOCUMENT };
   }
 
   const { data, error } = await supabase
@@ -164,12 +170,9 @@ export async function exportGeneratedDocument(
   optionalContent?: GeneratedDocumentContent,
 ): Promise<ExportDocumentResult> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
-  const userPresent = Boolean(user && !authError);
+  const userPresent = Boolean(user);
 
   console.log(
     `[LegaLese/ExportAction] Export requested | docId: ${documentId} | format: ${format} | userPresent: ${userPresent}`,
@@ -182,20 +185,18 @@ export async function exportGeneratedDocument(
     return { error: "You must be signed in to export documents." };
   }
 
-  let content: GeneratedDocumentContent | null = optionalContent ?? null;
-  let createdAt: string | undefined = undefined;
-
-  if (!content) {
-    const { document, error: docError } = await getGeneratedDocument(documentId);
-    if (docError || !document) {
-      console.warn(
-        `[LegaLese/ExportAction] Document lookup failed | docId: ${documentId} | error: ${docError}`,
-      );
-      return { error: docError ?? "Document not found or access denied." };
-    }
-    content = document.generated_content as GeneratedDocumentContent;
-    createdAt = document.created_at;
+  // Always verify that the authenticated user owns the documentId
+  const { document, error: docError } = await getGeneratedDocument(documentId);
+  if (docError || !document) {
+    console.warn(
+      `[LegaLese/ExportAction] Document lookup failed or access denied | docId: ${documentId}`,
+    );
+    return { error: docError ?? "Document not found or access denied." };
   }
+
+  const content: GeneratedDocumentContent =
+    optionalContent ?? (document.generated_content as GeneratedDocumentContent);
+  const createdAt: string | undefined = document.created_at;
 
   if (!content || !content.title || !Array.isArray(content.sections)) {
     console.error("[LegaLese/ExportAction] Invalid document payload structure");
@@ -275,13 +276,14 @@ export async function listGeneratedDocuments(): Promise<{
   error?: string;
 }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
+  if (!user) {
     return { error: "You must be signed in to view documents." };
+  }
+
+  if (isDemoMode() && user.id === DEMO_USER.id) {
+    return { documents: [DEMO_GENERATED_DOCUMENT] };
   }
 
   const { data, error } = await supabase

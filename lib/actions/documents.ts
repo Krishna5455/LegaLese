@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { processDocumentBuffer } from "@/lib/documents/processor";
 import { validateDocumentFile } from "@/lib/documents/validation";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 import type { Document } from "@/types/database";
 import type { ProcessedDocument } from "@/types/processing";
 
@@ -19,12 +20,9 @@ export async function uploadDocument(
 ): Promise<UploadActionResult> {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (authError || !user) {
+    if (!user) {
       return {
         error: "You must be signed in to upload contracts. Please sign in again.",
       };
@@ -139,12 +137,9 @@ export async function processDocument(
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (authError || !user) {
+    if (!user) {
       return { error: "You must be signed in to process documents." };
     }
 
@@ -299,12 +294,9 @@ export async function deleteDocument(
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
-    if (authError || !user) {
+    if (!user) {
       return { error: "You must be signed in to delete documents." };
     }
 
@@ -352,8 +344,9 @@ export async function deleteDocument(
       .eq("user_id", user.id);
 
     if (dbDeleteError) {
+      console.error("[LegaLese/deleteDocument] DB delete error:", dbDeleteError);
       return {
-        error: `Failed to delete document record: ${dbDeleteError.message}`,
+        error: "We could not delete this document right now. Please try again.",
       };
     }
 
@@ -361,12 +354,9 @@ export async function deleteDocument(
 
     return { success: true };
   } catch (err) {
-    console.error("Unexpected delete error:", err);
+    console.error("[LegaLese/deleteDocument] Unexpected delete error:", err);
     return {
-      error:
-        err instanceof Error
-          ? err.message
-          : "An unexpected error occurred while deleting the document.",
+      error: "An unexpected error occurred while deleting the document. Please try again.",
     };
   }
 }

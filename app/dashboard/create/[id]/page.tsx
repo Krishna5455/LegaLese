@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { GeneratedDocumentWorkspace } from "@/components/create/GeneratedDocumentWorkspace";
 import { getGeneratedDocument } from "@/lib/actions/generated-documents";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,7 @@ type PageProps = {
 
 export default async function ViewGeneratedDocumentPage({ params }: PageProps) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) {
     redirect("/login");

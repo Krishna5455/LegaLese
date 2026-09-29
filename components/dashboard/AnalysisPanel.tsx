@@ -1,28 +1,46 @@
 "use client";
 
 import { useState } from "react";
-
 import { FindingCard } from "@/components/dashboard/FindingCard";
 import { getRiskLabel } from "@/lib/ai/scorer";
 import type { DetailedAnalysis } from "@/types/analysis";
+import {
+  FileText,
+  AlertTriangle,
+  CheckCircle2,
+  ShieldAlert,
+  Info,
+} from "lucide-react";
 
 function RiskScoreBadge({ riskScore }: { riskScore: number | null }) {
   const { label, level } = getRiskLabel(riskScore);
-  const colorMap: Record<string, string> = {
-    informational: "bg-blue-50 text-blue-700 border-blue-200",
-    low: "bg-green-50 text-green-700 border-green-200",
-    medium: "bg-yellow-50 text-yellow-800 border-yellow-200",
-    high: "bg-orange-50 text-orange-700 border-orange-200",
+  const colorMap: Record<string, { bg: string; icon: React.ReactNode }> = {
+    informational: {
+      bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+      icon: <Info className="w-3.5 h-3.5 text-indigo-600" />,
+    },
+    low: {
+      bg: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+    },
+    medium: {
+      bg: "bg-amber-50 text-amber-700 border-amber-200",
+      icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />,
+    },
+    high: {
+      bg: "bg-rose-50 text-rose-700 border-rose-200",
+      icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />,
+    },
   };
 
+  const item = colorMap[level] ?? colorMap.low;
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-semibold ${
-        colorMap[level] ?? colorMap.low
-      }`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-0.5 text-xs font-semibold ${item.bg}`}
     >
-      {label}
+      {item.icon}
+      <span>{label}</span>
     </span>
   );
 }
@@ -65,19 +83,19 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-border bg-background overflow-hidden">
+    <div className="mt-4 rounded-xl border border-border bg-background overflow-hidden shadow-xs">
       {/* Panel header */}
       <div className="border-b border-border bg-surface px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-semibold text-foreground">
-            AI Contract Analysis
+          <span className="text-sm font-bold text-foreground">
+            Contract Audit Overview
           </span>
           <RiskScoreBadge riskScore={analysis.risk_score} />
-          <span className="text-xs font-medium bg-[#059669]/10 text-[#059669] border border-[#059669]/20 px-2 py-0.5 rounded">
-            Commercial Contract Audit
+          <span className="text-xs font-medium bg-accent-soft text-accent border border-accent/20 px-2 py-0.5 rounded">
+            Commercial Analysis
           </span>
           {analysis.created_at && (
-            <span className="ml-auto text-xs text-muted">
+            <span className="ml-auto text-xs text-muted font-mono">
               {formatDate(analysis.created_at)}
             </span>
           )}
@@ -91,19 +109,19 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`flex shrink-0 items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex shrink-0 items-center gap-1.5 px-4 py-2.5 text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === tab.id
-                ? "border-b-2 border-accent text-accent"
-                : "text-muted hover:text-foreground"
+                ? "border-b-2 border-accent text-accent bg-background"
+                : "text-secondary hover:text-foreground hover:bg-slate-50"
             }`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
             {tabCount[tab.id] != null && (
               <span
-                className={`rounded-full px-1.5 py-0.5 text-xs ${
+                className={`rounded-full px-1.5 py-0.2 text-[10px] ${
                   activeTab === tab.id
                     ? "bg-accent/10 text-accent"
-                    : "bg-border text-muted"
+                    : "bg-slate-100 text-secondary"
                 }`}
               >
                 {tabCount[tab.id]}
@@ -114,20 +132,15 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
       </div>
 
       {/* Tab content */}
-      <div className="p-4">
+      <div className="p-4 sm:p-5">
         {/* Summary */}
         {activeTab === "summary" && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-sm text-foreground leading-relaxed">
               {analysis.summary ?? "No summary available."}
             </p>
-            <div className="rounded-lg border border-border bg-surface p-3">
-              <p className="text-xs text-muted">
-                <strong>Legal Disclaimer:</strong> LegaLese helps you understand
-                contracts in plain language — it is not a law firm and does not
-                provide legal advice. For important legal decisions, consult a
-                qualified attorney.
-              </p>
+            <div className="rounded-lg border border-border bg-surface p-3 text-xs text-secondary leading-relaxed">
+              <strong className="text-foreground">Legal Notice:</strong> LegaLese provides automated contract analysis for informational guidance. It does not constitute legal representation.
             </div>
           </div>
         )}
@@ -136,7 +149,7 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
         {activeTab === "findings" && (
           <div className="space-y-3">
             {analysis.findings.length === 0 ? (
-              <p className="text-sm text-muted">No findings identified.</p>
+              <p className="text-xs text-muted">No findings identified.</p>
             ) : (
               analysis.findings.map((finding) => (
                 <FindingCard key={finding.id} finding={finding} />
@@ -149,7 +162,7 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
         {activeTab === "clauses" && (
           <div className="space-y-3">
             {analysis.clauses.length === 0 ? (
-              <p className="text-sm text-muted">No clauses extracted.</p>
+              <p className="text-xs text-muted">No clauses extracted.</p>
             ) : (
               analysis.clauses.map((clause) => (
                 <div
@@ -157,22 +170,21 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
                   className="rounded-lg border border-border bg-background p-3.5 space-y-1.5"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-accent break-words min-w-0 max-w-full">
-                      {clause.section}
+                    <span className="text-xs font-semibold text-accent break-words min-w-0 max-w-full flex items-center gap-1">
+                      <FileText className="w-3 h-3 text-secondary" />
+                      <span>{clause.section}</span>
                     </span>
 
-                    {clause.clause_number && (
-                      <span className="text-xs text-muted">
-                        Clause {clause.clause_number}
-                      </span>
-                    )}
-                    {clause.page_number != null && (
-                      <span className="text-xs text-muted ml-auto">
-                        Page {clause.page_number}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      {clause.clause_number && (
+                        <span>Clause {clause.clause_number}</span>
+                      )}
+                      {clause.page_number != null && (
+                        <span>Page {clause.page_number}</span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs font-mono text-foreground bg-surface p-2.5 rounded border border-border/50 leading-relaxed">
+                  <p className="text-xs font-mono text-secondary bg-surface p-2.5 rounded border border-border/50 leading-relaxed">
                     {clause.text}
                   </p>
                 </div>
@@ -185,26 +197,26 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
         {activeTab === "keyTerms" && (
           <div className="space-y-3">
             {analysis.key_terms.length === 0 ? (
-              <p className="text-sm text-muted">No key terms identified.</p>
+              <p className="text-xs text-muted">No key terms identified.</p>
             ) : (
-              <dl className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {analysis.key_terms.map((kt) => (
                   <div
                     key={kt.id}
-                    className="rounded-lg border border-border bg-background p-3"
+                    className="rounded-lg border border-border bg-background p-3 space-y-1"
                   >
-                    <dt className="text-sm font-semibold text-foreground">
+                    <p className="text-xs font-bold text-foreground">
                       {kt.term}
-                    </dt>
-                    <dd className="mt-1 text-sm text-muted">{kt.value}</dd>
+                    </p>
+                    <p className="text-xs text-secondary leading-relaxed">{kt.value}</p>
                     {kt.clause && (
-                      <dd className="mt-2 text-xs text-muted/70 italic border-l-2 border-accent/20 pl-2">
-                        &ldquo;{kt.clause.text}&rdquo; ({kt.clause.section})
-                      </dd>
+                      <p className="text-[11px] text-muted italic border-l-2 border-accent/30 pl-2 mt-1">
+                        &ldquo;{kt.clause.text}&rdquo;
+                      </p>
                     )}
                   </div>
                 ))}
-              </dl>
+              </div>
             )}
           </div>
         )}
@@ -213,35 +225,35 @@ export function AnalysisPanel({ analysis }: AnalysisPanelProps) {
         {activeTab === "obligations" && (
           <div className="space-y-3">
             {analysis.obligations.length === 0 ? (
-              <p className="text-sm text-muted">No obligations identified.</p>
+              <p className="text-xs text-muted">No obligations identified.</p>
             ) : (
-              <ul className="space-y-3">
+              <div className="space-y-2.5">
                 {analysis.obligations.map((obl) => (
-                  <li
+                  <div
                     key={obl.id}
-                    className="rounded-lg border border-border bg-background p-3 space-y-1.5"
+                    className="rounded-lg border border-border bg-background p-3 space-y-1"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       {obl.responsible_party && (
-                        <span className="rounded bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                        <span className="rounded bg-accent-soft text-accent border border-accent/20 px-2 py-0.5 text-[11px] font-semibold">
                           {obl.responsible_party}
                         </span>
                       )}
                       {obl.deadline && (
-                        <span className="rounded bg-yellow-50 text-yellow-800 border border-yellow-200 px-2 py-0.5 text-xs">
+                        <span className="rounded bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 text-[11px] font-medium">
                           Deadline: {obl.deadline}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-foreground">{obl.description}</p>
+                    <p className="text-xs text-foreground font-medium">{obl.description}</p>
                     {obl.clause && (
-                      <p className="text-xs text-muted/70 italic border-l-2 border-accent/20 pl-2">
-                        &ldquo;{obl.clause.text}&rdquo; ({obl.clause.section})
+                      <p className="text-[11px] text-muted italic border-l-2 border-accent/30 pl-2">
+                        &ldquo;{obl.clause.text}&rdquo;
                       </p>
                     )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         )}

@@ -2,7 +2,11 @@ import "server-only";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { GEMINI_GENERATION_TIMEOUT_MS, getGeminiConfig } from "@/lib/ai/config";
+import {
+  GEMINI_GENERATION_TIMEOUT_MS,
+  GEMINI_THINKING_BUDGET,
+  getGeminiConfig,
+} from "@/lib/ai/config";
 import { buildSystemInstruction, buildUserMessage } from "@/lib/ai/prompt";
 import { prepareContractText } from "@/lib/ai/prompt";
 import { AIAnalysisOutputSchema } from "@/lib/ai/schema";
@@ -27,7 +31,8 @@ export async function analyzeContractWithGemini(
     systemInstruction: buildSystemInstruction(),
     generationConfig: {
       responseMimeType: "application/json",
-    },
+      thinkingConfig: { thinkingBudget: GEMINI_THINKING_BUDGET },
+    } as unknown as import("@google/generative-ai").GenerationConfig,
   });
 
   const userMessage = buildUserMessage(doc, contractText);

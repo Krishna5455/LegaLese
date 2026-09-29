@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { DocumentTypeDefinition } from "@/types/generation";
 
 type DocumentTypeSelectorProps = {
@@ -31,9 +32,19 @@ export function DocumentTypeSelector({
     },
   ];
 
+  const [roadmapNotice, setRoadmapNotice] = useState<string | null>(null);
+
   return (
     <div className="space-y-3">
-      <h2 className="text-sm font-bold text-foreground">Select Agreement Type</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-bold text-foreground">Select Agreement Type</h2>
+        {roadmapNotice && (
+          <span className="text-[11px] font-medium text-accent animate-in fade-in">
+            {roadmapNotice}
+          </span>
+        )}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         {types.map((type) => {
           const isSelected = selectedId === type.id;
@@ -41,7 +52,10 @@ export function DocumentTypeSelector({
             <button
               key={type.id}
               type="button"
-              onClick={() => onSelect(type.id)}
+              onClick={() => {
+                setRoadmapNotice(null);
+                onSelect(type.id);
+              }}
               className={`rounded-xl border p-4 text-left transition-all ${
                 isSelected
                   ? "border-accent bg-accent-soft ring-1 ring-accent/30 shadow-xs"
@@ -64,9 +78,14 @@ export function DocumentTypeSelector({
         })}
 
         {roadmapTypes.map((item) => (
-          <div
+          <button
             key={item.id}
-            className="rounded-xl border border-border/60 bg-slate-50/50 p-4 text-left opacity-75 cursor-not-allowed select-none"
+            type="button"
+            onClick={() => {
+              setRoadmapNotice(`${item.label} is scheduled on our roadmap.`);
+              setTimeout(() => setRoadmapNotice(null), 4000);
+            }}
+            className="rounded-xl border border-border/60 bg-slate-50/50 p-4 text-left opacity-80 hover:opacity-100 hover:border-border transition-all cursor-pointer select-none"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-secondary">
@@ -79,7 +98,7 @@ export function DocumentTypeSelector({
             <p className="mt-1 text-xs text-muted leading-relaxed">
               {item.description}
             </p>
-          </div>
+          </button>
         ))}
       </div>
     </div>

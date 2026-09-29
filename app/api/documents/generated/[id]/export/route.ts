@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 import { exportPdf } from "@/lib/generation/export-pdf";
 import { exportDocx } from "@/lib/generation/export-docx";
 import {
@@ -45,18 +46,13 @@ export async function GET(
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
 
     console.log(
-      `[LegaLese/ExportAPI] Auth check | userPresent: ${Boolean(user)} | authError: ${
-        authError?.message ?? "none"
-      }`,
+      `[LegaLese/ExportAPI] Auth check | userPresent: ${Boolean(user)}`,
     );
 
-    if (authError || !user) {
+    if (!user) {
       console.warn("[LegaLese/ExportAPI] Unauthorized export attempt");
       return NextResponse.json(
         { error: "Unauthorized. Please sign in to export documents." },
@@ -64,19 +60,34 @@ export async function GET(
       );
     }
 
-    const { data: documentRow, error: dbError } = await supabase
-      .from("generated_documents")
-      .select("*")
-      .eq("id", documentId)
-      .eq("user_id", user.id)
-      .single();
+    let documentRow: { generated_content: unknown; created_at: string } | null = null;
 
-    if (dbError || !documentRow) {
-      console.warn(
-        `[LegaLese/ExportAPI] Document lookup failed | dbError: ${
-          dbError?.message ?? "Not found"
-        }`,
-      );
+    if (documentId.startsWith("demo-") || documentId === "demo-doc-1") {
+      const { DEMO_GENERATED_DOCUMENT } = await import("@/lib/demo/demo-state");
+      documentRow = DEMO_GENERATED_DOCUMENT;
+    } else {
+      const { data, error: dbError } = await supabase
+        .from("generated_documents")
+        .select("*")
+        .eq("id", documentId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (dbError || !data) {
+        console.warn(
+          `[LegaLese/ExportAPI] Document lookup failed | dbError: ${
+            dbError?.message ?? "Not found"
+          }`,
+        );
+        return NextResponse.json(
+          { error: "Document not found or access denied." },
+          { status: 404 },
+        );
+      }
+      documentRow = data;
+    }
+
+    if (!documentRow) {
       return NextResponse.json(
         { error: "Document not found or access denied." },
         { status: 404 },
@@ -159,7 +170,7 @@ export async function GET(
       `[LegaLese/ExportAPI] Export exception caught | docId: ${documentId} | format: ${format} | error: ${errorMessage}`,
     );
     return NextResponse.json(
-      { error: `Export failed: ${errorMessage}` },
+      { error: "We could not generate your export file right now. Please try again." },
       { status: 500 },
     );
   }

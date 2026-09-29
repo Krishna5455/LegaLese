@@ -7,15 +7,15 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-[#171717] text-white hover:bg-[#262626] border border-[#171717] shadow-xs active:scale-[0.99]",
+    "bg-[#171717] text-white hover:bg-[#262626] border border-[#171717] shadow-xs btn-interactive",
   secondary:
-    "bg-white text-[#171717] border border-[#E7E5E2] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] shadow-2xs active:scale-[0.99]",
+    "bg-white text-[#171717] border border-[#E7E5E2] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] shadow-2xs btn-interactive",
   accent:
-    "bg-[#C2410C] text-white hover:bg-[#9A3412] border border-[#C2410C] shadow-xs active:scale-[0.99]",
+    "bg-[#059669] text-white hover:bg-[#047857] border border-[#059669] shadow-xs btn-interactive",
   outline:
-    "bg-transparent text-[#171717] border border-[#E7E5E2] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] active:scale-[0.99]",
+    "bg-transparent text-[#171717] border border-[#E7E5E2] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] btn-interactive",
   ghost:
-    "bg-transparent text-[#666666] hover:text-[#171717] hover:bg-[#F0EFEA] border border-transparent active:scale-[0.99]",
+    "bg-transparent text-[#5F6368] hover:text-[#171717] hover:bg-[#F0EFEA] border border-transparent btn-interactive",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

@@ -15,9 +15,9 @@ export function AnimatedList({ children, className = "" }: AnimatedListProps) {
       {childrenArray.map((child, index) => (
         <div
           key={index}
-          className="transition-all duration-300 ease-out animate-fadeIn"
+          className="animate-fadeIn"
           style={{
-            animationDelay: `${index * 60}ms`,
+            animationDelay: `${Math.min(index * 45, 270)}ms`,
             animationFillMode: "both",
           }}
         >

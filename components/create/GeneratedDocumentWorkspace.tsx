@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { useState } from "react";
-
 import dynamic from "next/dynamic";
+import {
+  FileText,
+  Sparkles,
+  ShieldAlert,
+  SlidersHorizontal,
+  ArrowLeft,
+  Download,
+  Copy,
+  Check,
+  Loader2,
+  AlertCircle,
+  Shield,
+  Users,
+} from "lucide-react";
 
 const DocumentExplanationView = dynamic(
   () =>
@@ -12,8 +25,24 @@ const DocumentExplanationView = dynamic(
     ),
   {
     loading: () => (
-      <div className="rounded-xl border border-border bg-surface p-8 text-center text-xs text-muted animate-pulse">
-        Loading plain-language explanation view...
+      <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 animate-pulse">
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div className="space-y-2">
+            <div className="h-5 w-48 bg-slate-200 rounded-md" />
+            <div className="h-3.5 w-72 bg-slate-100 rounded-md" />
+          </div>
+          <div className="h-8 w-28 bg-slate-200 rounded-md" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 bg-slate-100 rounded-xl" />
+          ))}
+        </div>
+        <div className="h-28 bg-slate-100 rounded-xl" />
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="h-36 bg-slate-100 rounded-xl" />
+          <div className="h-36 bg-slate-100 rounded-xl" />
+        </div>
       </div>
     ),
     ssr: false,
@@ -27,13 +56,31 @@ const DocumentReviewView = dynamic(
     ),
   {
     loading: () => (
-      <div className="rounded-xl border border-border bg-surface p-8 text-center text-xs text-muted animate-pulse">
-        Loading agreement review and risk analysis...
+      <div className="rounded-2xl border border-border bg-surface p-8 space-y-6 animate-pulse">
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div className="space-y-2">
+            <div className="h-5 w-52 bg-slate-200 rounded-md" />
+            <div className="h-3.5 w-80 bg-slate-100 rounded-md" />
+          </div>
+          <div className="h-8 w-28 bg-slate-200 rounded-md" />
+        </div>
+        <div className="h-3 w-full bg-slate-200 rounded-full" />
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 bg-slate-100 rounded-xl" />
+          ))}
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 bg-slate-100 rounded-xl" />
+          ))}
+        </div>
       </div>
     ),
     ssr: false,
   },
 );
+
 import { exportGeneratedDocument } from "@/lib/actions/generated-documents";
 import { explainGeneratedDocumentAction } from "@/lib/actions/explanation";
 import { reviewGeneratedDocumentAction } from "@/lib/actions/review";
@@ -228,15 +275,15 @@ export function GeneratedDocumentWorkspace({
       <div>
         <Link
           href="/dashboard"
-          className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5"
+          className="text-xs font-semibold text-accent hover:underline inline-flex items-center gap-1.5 transition-colors"
         >
-          ← Back to Dashboard
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Dashboard</span>
         </Link>
       </div>
 
-
       {/* Header Banner & Title */}
-      <div className="rounded-xl border border-border bg-surface p-6 sm:p-7 space-y-6 shadow-xs">
+      <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 space-y-6 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -258,99 +305,155 @@ export function GeneratedDocumentWorkspace({
               type="button"
               onClick={() => handleDownload("pdf")}
               disabled={!!activeExportFormat}
-              className="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50 transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-hover disabled:opacity-50 transition-colors shadow-xs cursor-pointer"
             >
-              {activeExportFormat === "pdf" ? "Preparing PDF..." : "Download PDF"}
+              {activeExportFormat === "pdf" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Preparing PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </>
+              )}
             </button>
 
             <button
               type="button"
               onClick={() => handleDownload("docx")}
               disabled={!!activeExportFormat}
-              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {activeExportFormat === "docx" ? "Preparing DOCX..." : "DOCX"}
+              {activeExportFormat === "docx" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>DOCX...</span>
+                </>
+              ) : (
+                <span>DOCX</span>
+              )}
             </button>
 
             <button
               type="button"
               onClick={() => handleDownload("md")}
               disabled={!!activeExportFormat}
-              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {activeExportFormat === "md" ? "Preparing..." : "Markdown"}
+              {activeExportFormat === "md" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Markdown...</span>
+                </>
+              ) : (
+                <span>Markdown</span>
+              )}
             </button>
 
             <button
               type="button"
               onClick={handleCopy}
               disabled={!!activeExportFormat}
-              className="rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-slate-50 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {copied ? "✓ Copied" : "Copy"}
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-accent">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-secondary" />
+                  <span>Copy</span>
+                </>
+              )}
             </button>
           </div>
         </div>
 
         {/* Primary View Switcher Pipeline Navigation Bar */}
-        <div className="flex items-center gap-1.5 p-1 bg-background rounded-lg border border-border overflow-x-auto">
+        <div
+          role="tablist"
+          aria-label="Agreement workspace views"
+          className="flex items-center gap-1.5 p-1 glass-pill rounded-xl overflow-x-auto"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "document"}
             onClick={() => setViewMode("document")}
-            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer ${
+            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
               viewMode === "document"
                 ? "bg-surface text-accent shadow-xs border border-border"
                 : "text-secondary hover:text-foreground hover:bg-slate-100"
             }`}
           >
-            📄 View Agreement
+            <FileText className="w-3.5 h-3.5" />
+            <span>View Agreement</span>
           </button>
 
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "explanation"}
             onClick={handleUnderstandAgreement}
             disabled={isExplaining}
-            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
               viewMode === "explanation"
                 ? "bg-surface text-accent shadow-xs border border-border"
                 : "text-secondary hover:text-foreground hover:bg-slate-100"
             }`}
           >
-            <span>💡</span>
+            {isExplaining ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
             <span>{isExplaining ? "Analyzing..." : "Understand Agreement"}</span>
           </button>
 
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "review"}
             onClick={handleReviewAgreement}
             disabled={isReviewing}
-            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer flex items-center gap-2 ${
               viewMode === "review"
                 ? "bg-surface text-accent shadow-xs border border-border"
                 : "text-secondary hover:text-foreground hover:bg-slate-100"
             }`}
           >
-            <span>⚠️</span>
+            {isReviewing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" />
+            ) : (
+              <ShieldAlert className="w-3.5 h-3.5" />
+            )}
             <span>{isReviewing ? "Reviewing..." : "Review Agreement"}</span>
           </button>
 
           <button
             type="button"
             disabled
-            className="px-3 py-2 text-xs font-medium text-slate-400 select-none cursor-not-allowed flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-2 text-xs font-medium text-slate-400 select-none cursor-not-allowed flex items-center gap-2 shrink-0"
           >
-            <span>⚙️ Customize</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+            <span>Customize</span>
             <span className="rounded bg-accent-soft text-accent border border-accent/20 px-1.5 py-0.5 text-[9px] font-semibold">
               Coming Soon
             </span>
           </button>
         </div>
 
-
         {/* Error Alerts */}
         {exportError ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
-            <span>⚠️ {exportError}</span>
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs sm:text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span>{exportError}</span>
+            </div>
             <button
               onClick={() => setExportError(null)}
               className="text-xs font-bold underline hover:no-underline ml-2"
@@ -361,8 +464,11 @@ export function GeneratedDocumentWorkspace({
         ) : null}
 
         {explanationError ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
-            <span>⚠️ {explanationError}</span>
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs sm:text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span>{explanationError}</span>
+            </div>
             <button
               onClick={() => setExplanationError(null)}
               className="text-xs font-bold underline hover:no-underline ml-2"
@@ -373,8 +479,11 @@ export function GeneratedDocumentWorkspace({
         ) : null}
 
         {reviewError ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
-            <span>⚠️ {reviewError}</span>
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs sm:text-sm text-red-600 dark:text-red-400 flex items-center justify-between font-semibold">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <span>{reviewError}</span>
+            </div>
             <button
               onClick={() => setReviewError(null)}
               className="text-xs font-bold underline hover:no-underline ml-2"
@@ -386,8 +495,9 @@ export function GeneratedDocumentWorkspace({
 
         {/* Agreed Parties summary card */}
         <div className="rounded-xl border border-border bg-surface-inset p-5 text-sm space-y-2">
-          <p className="font-bold text-foreground uppercase tracking-wider text-xs">
-            Agreed Parties
+          <p className="font-bold text-foreground uppercase tracking-wider text-xs flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-secondary" />
+            <span>Agreed Parties</span>
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -414,55 +524,101 @@ export function GeneratedDocumentWorkspace({
         </div>
       </div>
 
-      {/* Workspace View Mode Switcher */}
-      {viewMode === "review" && review ? (
-        <DocumentReviewView
-          review={review}
-          documentTitle={content.title}
-          onReturnToDocument={() => setViewMode("document")}
-          onJumpToSection={handleJumpToSection}
-        />
-      ) : viewMode === "explanation" && explanation ? (
-        <DocumentExplanationView
-          explanation={explanation}
-          documentTitle={content.title}
-          onReturnToDocument={() => setViewMode("document")}
-          onJumpToSection={handleJumpToSection}
-        />
-      ) : (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h2 className="text-xl font-bold text-foreground">
-              Agreement Text ({sortedSections.length} Sections)
-            </h2>
-          </div>
-
-          {sortedSections.map((sec) => (
-            <article
-              key={sec.id}
-              id={`section-${sec.id}`}
-              className="rounded-2xl border border-border bg-surface p-7 sm:p-8 space-y-4 transition-all card-hover shadow-xs"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-foreground">
-                  {sec.order + 1}. {sec.title}
-                </h3>
-              </div>
-
-              <div className="prose prose-sm dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-line leading-relaxed">
-                {sec.content}
-              </div>
-            </article>
-          ))}
-
-          {/* Legal Disclaimer Card */}
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-900 dark:text-amber-300 space-y-2">
-            <div className="flex items-center gap-2 font-bold text-base">
-              <span>⚠️ Important Legal Notice</span>
+      {/* Active AI Processing Loading Banners */}
+      {isExplaining && (
+        <div className="rounded-2xl border border-accent/25 bg-accent-soft/30 p-10 text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface border border-accent/20 text-accent shadow-xs">
+              <Sparkles className="w-6 h-6 animate-pulse text-accent" />
             </div>
-            <p className="leading-relaxed">{content.disclaimer}</p>
+          </div>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h3 className="text-base font-bold text-foreground">
+              Synthesizing Plain-Language Explanation...
+            </h3>
+            <p className="text-xs sm:text-sm text-secondary">
+              Gemini is breaking down complex legal terms, obligations, and key checkpoints for your agreement.
+            </p>
           </div>
         </div>
+      )}
+
+      {isReviewing && (
+        <div className="rounded-2xl border border-indigo-200/80 bg-indigo-50/40 p-10 text-center space-y-3">
+          <div className="flex justify-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface border border-indigo-200 text-indigo-700 shadow-xs">
+              <ShieldAlert className="w-6 h-6 animate-pulse text-indigo-600" />
+            </div>
+          </div>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h3 className="text-base font-bold text-foreground">
+              Conducting Agreement Risk Review...
+            </h3>
+            <p className="text-xs sm:text-sm text-secondary">
+              Gemini is evaluating contract clauses to detect potential liabilities, unbalanced terms, and points to clarify.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Workspace View Mode Switcher */}
+      {!isExplaining && !isReviewing && (
+        <>
+          {viewMode === "review" && review ? (
+            <div className="animate-fadeIn">
+              <DocumentReviewView
+                review={review}
+                documentTitle={content.title}
+                onReturnToDocument={() => setViewMode("document")}
+                onJumpToSection={handleJumpToSection}
+              />
+            </div>
+          ) : viewMode === "explanation" && explanation ? (
+            <div className="animate-fadeIn">
+              <DocumentExplanationView
+                explanation={explanation}
+                documentTitle={content.title}
+                onReturnToDocument={() => setViewMode("document")}
+                onJumpToSection={handleJumpToSection}
+              />
+            </div>
+          ) : (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h2 className="text-xl font-bold text-foreground">
+                  Agreement Text ({sortedSections.length} Sections)
+                </h2>
+              </div>
+
+              {sortedSections.map((sec) => (
+                <article
+                  key={sec.id}
+                  id={`section-${sec.id}`}
+                  className="rounded-2xl border border-border bg-surface p-7 sm:p-8 space-y-4 transition-all card-hover shadow-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-bold text-foreground">
+                      {sec.order + 1}. {sec.title}
+                    </h3>
+                  </div>
+
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-base text-foreground/90 whitespace-pre-line leading-relaxed">
+                    {sec.content}
+                  </div>
+                </article>
+              ))}
+
+              {/* Legal Disclaimer Card */}
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-amber-900 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-base">
+                  <Shield className="w-4 h-4 text-amber-700" />
+                  <span>Important Legal Notice</span>
+                </div>
+                <p className="leading-relaxed">{content.disclaimer}</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Roadmap Teasers Section: "More ways to protect yourself" */}

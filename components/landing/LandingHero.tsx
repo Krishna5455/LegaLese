@@ -1,125 +1,124 @@
-"use client";
-
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowRight, Upload, ShieldCheck, Check, AlertTriangle, Sparkles } from "lucide-react";
-import { Magnet } from "@/components/ui/Magnet";
-import { SplitText } from "@/components/ui/SplitText";
+import { ArrowRight, Upload, Sparkles } from "lucide-react";
 
 export function LandingHero() {
   return (
-    <section id="hero" className="relative min-h-[92vh] flex flex-col justify-between pt-24 pb-12 overflow-hidden bg-[#F7F7F5] border-b border-[#E7E5E2]">
-      {/* Ambient background depth wash */}
-      <div className="absolute inset-0 pointer-events-none opacity-20">
-        <Image
-          src="/images/workspace_contract_preview.jpg"
-          alt="LegaLese contract workspace atmosphere"
-          fill
-          sizes="100vw"
-          priority
-          className="object-cover object-center filter blur-xs mix-blend-multiply"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#F7F7F5]/90 via-[#F7F7F5]/70 to-[#F7F7F5]" />
-      </div>
+    <section className="relative pt-28 pb-16 overflow-hidden bg-[#F9F9F8] border-b border-[#E5E5E3]">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 text-center space-y-6">
+        {/* Category Pill */}
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#E5E5E3] text-xs font-semibold text-[#059669] shadow-2xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
+          <span>AI-Powered LegalFlow Platform</span>
+        </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 sm:px-8 w-full flex-1 flex flex-col justify-center my-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center py-6 sm:py-10">
-          {/* Left Column: Command Authority Typography & CTAs (7 cols) */}
-          <div className="lg:col-span-7 space-y-6 sm:space-y-8">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#E7E5E2] text-xs font-semibold tracking-wider text-[#059669] uppercase shadow-2xs">
-              <ShieldCheck className="w-4 h-4 text-[#059669]" />
-              <span>Commercial Contract Intelligence Platform</span>
+        {/* Hero Headline */}
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[#111827] max-w-3xl mx-auto leading-[1.12]">
+          Your legal task. <br />
+          <span className="text-[#059669]">One guided journey.</span>
+        </h1>
+
+        {/* Subheadline */}
+        <p className="text-base sm:text-lg text-[#4B5563] max-w-2xl mx-auto leading-relaxed">
+          From understanding a document to preparing it, reviewing risk, getting professional guidance when needed, and tracking what happens next.
+        </p>
+
+        {/* Primary CTAs */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            href="/dashboard"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#111827] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1F2937] transition-all shadow-sm active:scale-98"
+          >
+            <span>Start a LegalFlow</span>
+            <ArrowRight className="w-4 h-4 text-[#10B981]" />
+          </Link>
+
+          <Link
+            href="/dashboard#upload"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-[#E5E5E3] bg-white px-6 py-3 text-sm font-semibold text-[#111827] hover:bg-[#F3F4F6] transition-all shadow-2xs active:scale-98"
+          >
+            <Upload className="w-4 h-4 text-[#6B7280]" />
+            <span>Analyze a document</span>
+          </Link>
+        </div>
+
+        {/* Canonical Journey Interactive Demo Showcase */}
+        <div id="journey" className="pt-10 max-w-4xl mx-auto text-left">
+          <div className="rounded-2xl bg-white border border-[#E5E5E3] shadow-md p-5 sm:p-7 space-y-6">
+            {/* Header: User Intent Input */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E5E5E3]">
+              <div className="flex items-center gap-2.5">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded border border-[#A7F3D0]">
+                  User Intent
+                </span>
+                <p className="text-sm font-semibold text-[#111827]">
+                  &quot;I want to hire a freelancer for my website.&quot;
+                </p>
+              </div>
+              <span className="text-xs text-[#6B7280] font-medium">
+                Canonical LegalFlow Journey
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <h1 className="heading-hero text-[#171717] tracking-tight leading-[1.08]">
-                <SplitText
-                  text="We protect you from the contracts you’re about to sign."
-                  className="font-bold"
-                  delay={12}
-                />
-              </h1>
-              <p className="text-[17px] sm:text-[19px] text-[#5F6368] leading-relaxed max-w-2xl">
-                Traditional agreements conceal uncapped indemnity and unfair payment terms in dense legalese. LegaLese drafts bulletproof contracts, translates every clause into plain English, and audits legal risk before you commit.
-              </p>
+            {/* 6-Stage Progression Flow */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2 text-center text-xs">
+              <div className="p-3 rounded-xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-1">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 1</span>
+                <p className="font-semibold text-[#111827]">Understand</p>
+                <p className="text-[11px] text-[#6B7280]">IP Scope & Roles</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-1">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 2</span>
+                <p className="font-semibold text-[#111827]">Prepare</p>
+                <p className="text-[11px] text-[#6B7280]">Freelance Contract</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] space-y-1 shadow-2xs">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 3</span>
+                <p className="font-semibold text-[#111827]">Review</p>
+                <p className="text-[11px] text-[#065F46] font-medium">AI Risk Audit</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-1">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 4</span>
+                <p className="font-semibold text-[#111827]">Trust</p>
+                <p className="text-[11px] text-[#6B7280]">Attorney Briefing</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-1">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 5</span>
+                <p className="font-semibold text-[#111827]">Track</p>
+                <p className="text-[11px] text-[#6B7280]">Milestones & Pay</p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#F9F9F8] border border-[#E5E5E3] space-y-1">
+                <span className="font-mono text-[10px] text-[#059669] font-bold uppercase">Stage 6</span>
+                <p className="font-semibold text-[#111827]">Complete</p>
+                <p className="text-[11px] text-[#6B7280]">Document Archive</p>
+              </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
-              <Magnet strength={0.2}>
-                <Link
-                  href="/dashboard/create"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#171717] px-7 py-3.5 text-sm font-semibold text-white hover:bg-[#262626] transition-all shadow-sm active:scale-98"
-                >
-                  <span>Draft your agreement</span>
-                  <ArrowRight className="w-4 h-4 text-[#059669]" />
-                </Link>
-              </Magnet>
+            {/* Dominant Next Action Snippet */}
+            <div className="p-4 rounded-xl bg-[#FAFAF9] border border-[#E5E5E3] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#111827]">
+                    Current Step: Review Liability & IP Transfer
+                  </span>
+                </div>
+                <p className="text-xs text-[#4B5563]">
+                  AI detected a standard 100% fee liability cap and bilateral IP transfer upon final invoice payment.
+                </p>
+              </div>
 
               <Link
-                href="/#analyze"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E5E2] bg-white px-6 py-3.5 text-sm font-semibold text-[#171717] hover:bg-[#F7F7F5] hover:border-[#D4D2CD] transition-all shadow-2xs active:scale-98"
+                href="/dashboard"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#111827] text-white text-xs font-semibold hover:bg-[#1F2937] transition-colors"
               >
-                <Upload className="w-4 h-4 text-[#5F6368]" />
-                <span>Audit existing contract</span>
+                <span>Open Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#10B981]" />
               </Link>
-            </div>
-
-            {/* Feature Highlights */}
-            <div className="pt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-[#5F6368]">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[#059669]" />
-                Plain-English Risk Analysis
-              </span>
-              <span>•</span>
-              <span>Guided Agreement Builder</span>
-              <span>•</span>
-              <span>Instant PDF & DOCX Export</span>
-            </div>
-          </div>
-
-          {/* Right Column: Prominent Senior Legal Counsel Portrait (5 cols) */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-2xl overflow-hidden border border-[#E7E5E2] bg-white shadow-xl aspect-4/5 sm:aspect-square lg:aspect-4/5 group">
-              <Image
-                src="/images/hero_legal_authority.jpg"
-                alt="Senior legal advisor in modern skyline law firm office"
-                fill
-                sizes="(max-width: 1024px) 100vw, 550px"
-                priority
-                className="object-cover object-center filter brightness-[0.98] transition-transform duration-700 ease-out group-hover:scale-102"
-              />
-
-              {/* Bottom Subtle Gradient for Overlay Text */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-
-              {/* Legal Standards Badge on Portrait */}
-              <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md border border-white/40 text-[11px] font-semibold text-[#171717] shadow-sm flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#059669]" />
-                <span>Structured Legal Frameworks</span>
-              </div>
-
-              {/* Floating Live Audited Contract Chip at Bottom-Left */}
-              <div className="absolute bottom-5 left-5 right-5 p-4 rounded-xl bg-white/95 backdrop-blur-md border border-[#E7E5E2] shadow-lg space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] uppercase font-bold text-[#171717]">
-                    Pre-Sign Contract Audit
-                  </span>
-                  <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[#F0FDF4] text-[#166534] border border-[#BBF7D0]">
-                    Audit Passed
-                  </span>
-                </div>
-                <div className="space-y-1 text-[11px]">
-                  <div className="flex items-center gap-1.5 text-[#166534] font-medium">
-                    <Check className="w-3.5 h-3.5 text-[#059669]" />
-                    <span>50% upfront retainer clause enforced</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[#B45309] font-medium">
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#B45309]" />
-                    <span>Uncapped liability clause replaced with 100% fee cap</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

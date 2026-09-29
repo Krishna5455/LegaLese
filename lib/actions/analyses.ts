@@ -6,6 +6,7 @@ import { analyzeContractWithGemini } from "@/lib/ai/gemini";
 import { computeRiskScore } from "@/lib/ai/scorer";
 import { processDocumentBuffer } from "@/lib/documents/processor";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 import type {
   AIClause,
   AIFinding,
@@ -52,12 +53,9 @@ export async function analyzeDocument(
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
-  if (authError || !user) {
+  if (!user) {
     return { error: "You must be signed in to analyze documents." };
   }
 
@@ -355,6 +353,8 @@ export async function analyzeDocument(
 /**
  * Retrieves the analysis and related child rows for a given document.
  */
+import { isDemoMode, DEMO_USER, getDemoDocumentAndAnalysis } from "@/lib/demo/demo-state";
+
 export async function getAnalysis(
   documentId: string,
 ): Promise<GetAnalysisResult> {
@@ -362,14 +362,19 @@ export async function getAnalysis(
     return { error: "Document ID is required." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  if (isDemoMode() && (documentId.startsWith("demo-") || documentId === "demo-doc-1" || documentId === "demo-doc-2")) {
+    return { analysis: getDemoDocumentAndAnalysis(documentId).analysis };
+  }
 
-  if (authError || !user) {
+  const supabase = await createClient();
+  const user = await getAuthenticatedUser(supabase);
+
+  if (!user) {
     return { error: "You must be signed in to view analyses." };
+  }
+
+  if (isDemoMode() && user.id === DEMO_USER.id) {
+    return { analysis: getDemoDocumentAndAnalysis(documentId).analysis };
   }
 
   const full = await fetchAnalysisWithDetails(supabase, documentId, user.id);

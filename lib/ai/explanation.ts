@@ -2,7 +2,11 @@ import "server-only";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { GEMINI_GENERATION_TIMEOUT_MS, getGeminiConfig } from "@/lib/ai/config";
+import {
+  GEMINI_GENERATION_TIMEOUT_MS,
+  GEMINI_THINKING_BUDGET,
+  getGeminiConfig,
+} from "@/lib/ai/config";
 import {
   buildExplanationSystemInstruction,
   buildExplanationUserMessage,
@@ -29,7 +33,8 @@ export async function explainGeneratedDocumentWithGemini(
     systemInstruction: buildExplanationSystemInstruction(),
     generationConfig: {
       responseMimeType: "application/json",
-    },
+      thinkingConfig: { thinkingBudget: GEMINI_THINKING_BUDGET },
+    } as unknown as import("@google/generative-ai").GenerationConfig,
   });
 
   const userMessage = buildExplanationUserMessage(content);

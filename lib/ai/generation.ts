@@ -2,7 +2,11 @@ import "server-only";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-import { GEMINI_GENERATION_TIMEOUT_MS, getGeminiConfig } from "@/lib/ai/config";
+import {
+  GEMINI_GENERATION_TIMEOUT_MS,
+  GEMINI_THINKING_BUDGET,
+  getGeminiConfig,
+} from "@/lib/ai/config";
 import {
   buildFreelanceAgreementUserMessage,
   buildGenerationSystemInstruction,
@@ -27,7 +31,8 @@ export async function generateFreelanceAgreementWithGemini(
     systemInstruction: buildGenerationSystemInstruction(),
     generationConfig: {
       responseMimeType: "application/json",
-    },
+      thinkingConfig: { thinkingBudget: GEMINI_THINKING_BUDGET },
+    } as unknown as import("@google/generative-ai").GenerationConfig,
   });
 
   const userMessage = buildFreelanceAgreementUserMessage(input);

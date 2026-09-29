@@ -5,14 +5,13 @@ import { CreateDocumentSection } from "@/components/create/CreateDocumentSection
 import { listGeneratedDocuments } from "@/lib/actions/generated-documents";
 import { DOCUMENT_TYPE_LIST } from "@/lib/generation/document-types";
 import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 
 export const dynamic = "force-dynamic";
 
 export default async function CreateDocumentPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser(supabase);
 
   if (!user) {
     redirect("/login");

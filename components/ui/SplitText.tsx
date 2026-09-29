@@ -23,10 +23,10 @@ export function SplitText({ text, className = "", delay = 80 }: SplitTextProps) 
       {words.map((word, idx) => (
         <span
           key={idx}
-          className={`inline-block transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1) ${
+          className={`inline-block transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isMounted
               ? "opacity-100 translate-y-0 filter-none"
-              : "opacity-0 translate-y-3 blur-[4px]"
+              : "opacity-0 translate-y-2 blur-[2px]"
           }`}
           style={{
             transitionDelay: `${idx * delay}ms`,

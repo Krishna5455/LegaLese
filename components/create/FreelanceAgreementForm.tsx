@@ -351,7 +351,7 @@ export function FreelanceAgreementForm() {
       <form onSubmit={handleSubmit} className="space-y-7">
         {/* STEP 1: What do you need? */}
         {currentStep === 1 ? (
-          <div className="space-y-5">
+          <div className="space-y-5 animate-fadeIn">
             <div>
               <h2 className="text-xl font-bold text-foreground">
                 What document do you need?
@@ -423,7 +423,7 @@ export function FreelanceAgreementForm() {
 
         {/* STEP 2: Tell us about the agreement */}
         {currentStep === 2 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fadeIn">
             <div>
               <h2 className="text-xl font-bold text-foreground">
                 Tell us about the agreement parties
@@ -487,7 +487,7 @@ export function FreelanceAgreementForm() {
 
         {/* STEP 3: Tell us about the work & payment */}
         {currentStep === 3 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fadeIn">
             <div>
               <h2 className="text-xl font-bold text-foreground">
                 Tell us about the work & payment
@@ -645,7 +645,7 @@ export function FreelanceAgreementForm() {
 
         {/* STEP 4: Review details & legal terms */}
         {currentStep === 4 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fadeIn">
             <div>
               <h2 className="text-xl font-bold text-foreground">
                 Review terms & generate agreement
