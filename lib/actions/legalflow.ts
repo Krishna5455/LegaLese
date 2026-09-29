@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthenticatedUser } from "@/lib/supabase/auth-helper";
 import {
   isDemoMode,
+  DEMO_USER,
   getDemoFlow,
   saveDemoFlow,
   listDemoFlows,
